@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zahlung einrichten – Grün & Garten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --green-900:#173404; --green-800:#27500A; --green-700:#3B6D11;
+      --green-600:#639922; --green-200:#C0DD97; --green-100:#EAF3DE;
+      --amber-600:#BA7517; --amber-200:#FAC775; --amber-100:#FAEEDA;
+      --gray-800:#2C2C2A; --gray-600:#5F5E5A; --gray-200:#D3D1C7;
+      --white:#fff; --bg:#f5f8f0;
+      --r-md:10px; --r-lg:14px; --r-xl:20px; --tr:0.2s ease;
+    }
+    body { font-family:'DM Sans',sans-serif; color:var(--gray-800); background:var(--bg); min-height:100vh; }
+
+    .navbar { position:sticky; top:0; z-index:200; background:rgba(255,255,255,0.93); backdrop-filter:blur(12px); border-bottom:1px solid var(--green-200); height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 2rem; }
+    .logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--green-800); text-decoration:none; }
+    .logo em { color:var(--amber-600); font-style:normal; }
+    .nbtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--green-200); background:transparent; color:var(--green-800); transition:all var(--tr); text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .nbtn:hover { background:var(--green-100); }
+
+    .page-wrap { max-width:620px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
+
+    /* STATUS KARTEN */
+    .status-card {
+      border-radius:var(--r-xl); padding:2rem; margin-bottom:1.5rem;
+      text-align:center; position:relative; overflow:hidden;
+    }
+    .status-card.gesperrt {
+      background:linear-gradient(135deg,#1a1a2e,#16213e);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .status-card.pending {
+      background:linear-gradient(135deg,#451a03,#78350f);
+      border:1px solid rgba(245,158,11,0.3);
+    }
+    .status-card.aktiv {
+      background:linear-gradient(135deg,#052e16,#14532d);
+      border:1px solid rgba(34,197,94,0.3);
+    }
+    .status-icon { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; margin:0 auto 1.2rem; }
+    .gesperrt .status-icon { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); }
+    .pending .status-icon { background:rgba(245,158,11,0.15); color:#FCD34D; }
+    .aktiv .status-icon { background:rgba(34,197,94,0.15); color:#4ADE80; }
+    .status-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:.6rem; }
+    .status-text { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.7; margin-bottom:1.5rem; }
+
+    /* SCHRITTE */
+    .schritte { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.5rem; }
+    .schritt { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:var(--r-lg); padding:.9rem; text-align:left; }
+    .schritt-nr { font-size:10px; font-weight:500; color:rgba(255,255,255,0.4); margin-bottom:4px; }
+    .schritt-text { font-size:12px; color:rgba(255,255,255,0.7); line-height:1.5; }
+    .schritt-text strong { color:#fff; display:block; margin-bottom:2px; }
+    .schritt.done { border-color:rgba(34,197,94,0.3); }
+    .schritt.done .schritt-nr { color:#4ADE80; }
+
+    /* STRIPE BUTTON */
+    .btn-stripe { display:inline-flex; align-items:center; gap:9px; padding:13px 28px; border-radius:50px; background:linear-gradient(135deg,#635BFF,#5147e5); color:#fff; border:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s ease; text-decoration:none; }
+    .btn-stripe:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,91,255,0.4); }
+    .btn-stripe:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .stripe-logo { font-size:18px; }
+
+    /* WARTEN BADGE */
+    .warten-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); color:#FCD34D; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:500; }
+    .aktiv-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ADE80; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:500; }
+
+    /* INFO KARTEN */
+    .card { background:var(--white); border:1px solid var(--green-200); border-radius:var(--r-xl); padding:1.5rem; margin-bottom:1.2rem; box-shadow:0 2px 12px rgba(59,109,17,0.06); }
+    .card-title { font-size:13px; font-weight:500; color:var(--green-800); display:flex; align-items:center; gap:7px; margin-bottom:1rem; padding-bottom:8px; border-bottom:1px solid var(--green-100); }
+    .card-title i { font-size:16px; color:var(--green-600); }
+
+    .info-item { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; font-size:13px; color:var(--gray-600); line-height:1.6; }
+    .info-item:last-child { margin-bottom:0; }
+    .info-item i { font-size:15px; color:var(--green-600); flex-shrink:0; margin-top:1px; }
+    .info-item strong { color:var(--gray-800); }
+
+    /* PROVISION */
+    .provision-box { background:var(--green-100); border:1px solid var(--green-200); border-radius:var(--r-lg); padding:1rem 1.2rem; }
+    .prov-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--gray-800); margin-bottom:6px; }
+    .prov-row:last-child { margin-bottom:0; border-top:1px solid var(--green-200); padding-top:6px; font-weight:500; }
+    .prov-example { font-size:12px; color:var(--gray-600); margin-top:8px; font-style:italic; }
+
+    /* BACK */
+    .back-link { display:flex; align-items:center; gap:6px; color:var(--gray-600); text-decoration:none; font-size:13px; margin-bottom:1.5rem; }
+    .back-link:hover { color:var(--green-700); }
+
+    .spinner-wrap { min-height:50vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+    .spinner { width:32px; height:32px; border-radius:50%; border:3px solid var(--green-200); border-top-color:var(--green-700); animation:spin 0.8s linear infinite; }
+
+    footer { background:var(--green-900); color:var(--green-200); padding:1.5rem; text-align:center; margin-top:2rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:#EAF3DE; }
+    .footer-logo em { color:var(--amber-200); font-style:normal; }
+    footer p { font-size:12px; opacity:0.6; margin-top:4px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Grün<em>&</em>Garten</a>
+  <a href="gaertner-dashboard.html" class="nbtn"><i class="ti ti-arrow-left"></i> Zurück</a>
+</nav>
+
+<div id="spinnerWrap" class="spinner-wrap">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--gray-600)">Wird geladen...</p>
+</div>
+
+<div id="mainWrap" style="display:none">
+<div class="page-wrap">
+
+  <a href="gaertner-dashboard.html" class="back-link">
+    <i class="ti ti-arrow-left"></i> Zurück zum Dashboard
+  </a>
+
+  <!-- STATUS BOX – wird per JS gefüllt -->
+  <div id="statusBox"></div>
+
+  <!-- INFO: Wie funktioniert Stripe Connect -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-help-circle"></i> Was ist Stripe Connect?</div>
+    <div class="info-item"><i class="ti ti-shield-check"></i><span><strong>Sicheres Bezahlsystem</strong> – Stripe ist der weltweit führende Zahlungsanbieter. Deine Bankdaten sind sicher verschlüsselt.</span></div>
+    <div class="info-item"><i class="ti ti-coin"></i><span><strong>Direkte Auszahlungen</strong> – Bezahlungen von Kunden werden automatisch auf dein Konto überwiesen.</span></div>
+    <div class="info-item"><i class="ti ti-lock"></i><span><strong>Datenschutz</strong> – Deine Bankdaten werden niemals an Kunden weitergegeben.</span></div>
+    <div class="info-item"><i class="ti ti-clock"></i><span><strong>Einmalige Einrichtung</strong> – Du richtest Stripe einmal ein, danach läuft alles automatisch.</span></div>
+  </div>
+
+  <!-- PROVISION -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-percent"></i> Provision & Auszahlung</div>
+    <div class="provision-box">
+      <div class="prov-row"><span>Auftragsbetrag (vom Kunden)</span><span style="color:var(--green-700);font-weight:500">100%</span></div>
+      <div class="prov-row"><span>Plattform-Provision</span><span style="color:#DC2626">–10%</span></div>
+      <div class="prov-row"><span>Deine Auszahlung</span><span style="color:var(--green-800)">90%</span></div>
+    </div>
+    <p class="prov-example">Beispiel: Kunde zahlt 50€ → du erhältst 45€ direkt auf dein Konto.</p>
+  </div>
+
+  <!-- WICHTIGER HINWEIS -->
+  <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--r-lg);padding:1rem 1.2rem;display:flex;gap:10px;align-items:flex-start">
+    <i class="ti ti-alert-triangle" style="color:#D97706;font-size:16px;flex-shrink:0;margin-top:1px"></i>
+    <div style="font-size:12px;color:#92400E;line-height:1.6">
+      <strong style="display:block;margin-bottom:3px">Wichtig: Freischaltung durch Admin</strong>
+      Nachdem du Stripe Connect eingerichtet hast, wird dein Antrag vom Administrator geprüft.
+      Erst nach Freischaltung durch den Admin wird dein Profil für Kunden sichtbar und du kannst Aufträge annehmen.
+      Dies dauert in der Regel 1–2 Werktage.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <div class="footer-logo">Grün<em>&</em>Garten</div>
+  <p>Deine Gärtner-Vermittlung · Hannover</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zmryzkmumypvxpidpxcz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptcnl6a211bXlwdnhwaWRweGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDEwNDQsImV4cCI6MjA3NTkxNzA0NH0.bTvCv1x7TZMT0_XuJbHnWxGUizROrGmecF_EnASMX4s';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── DEINE STRIPE CONNECT CLIENT ID ──
+// Trage hier deine Stripe Connect Client ID ein (aus dem Stripe Dashboard → Connect)
+// Format: ca_XXXXXXXXXXXXXXXXXXXXXXXX
+const STRIPE_CLIENT_ID = 'ca_DEINE_CLIENT_ID_HIER'; // ← Hier eintragen!
+const REDIRECT_URI = window.location.origin + '/geld.html'; // Callback URL
+
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session?.user) { window.location.href = 'anmelden.html'; return; }
+
+  const { data: profil } = await sb.from('profile')
+    .select('stripe_aktiv, stripe_pending, vorname')
+    .eq('id', session.user.id).single();
+
+  // Stripe OAuth Callback verarbeiten (wenn von Stripe zurückgekommen)
+  const urlParams = new URLSearchParams(window.location.search);
+  const stripeCode = urlParams.get('code');
+  const stripeState = urlParams.get('state');
+
+  if (stripeCode && stripeState === session.user.id) {
+    // Stripe hat den Code geschickt → stripe_pending setzen
+    await sb.from('profile').update({
+      stripe_pending: true,
+      stripe_aktiv:   false
+    }).eq('id', session.user.id);
+
+    // URL bereinigen
+    window.history.replaceState({}, '', 'geld.html');
+    renderStatus('pending', profil?.vorname || 'Gärtner');
+    document.getElementById('spinnerWrap').style.display = 'none';
+    document.getElementById('mainWrap').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('spinnerWrap').style.display = 'none';
+  document.getElementById('mainWrap').style.display = 'block';
+
+  if (profil?.stripe_aktiv) {
+    renderStatus('aktiv', profil.vorname || 'Gärtner');
+  } else if (profil?.stripe_pending) {
+    renderStatus('pending', profil.vorname || 'Gärtner');
+  } else {
+    renderStatus('gesperrt', profil?.vorname || 'Gärtner');
+  }
+}
+
+function renderStatus(status, name) {
+  const box = document.getElementById('statusBox');
+
+  if (status === 'aktiv') {
+    box.innerHTML = `
+      <div class="status-card aktiv">
+        <div class="status-icon"><i class="ti ti-circle-check"></i></div>
+        <div class="status-title">Konto aktiv!</div>
+        <div class="status-text">
+          Dein Stripe Connect Konto wurde vom Administrator freigeschaltet.<br>
+          Du kannst jetzt Aufträge annehmen und Zahlungen empfangen.
+        </div>
+        <span class="aktiv-badge"><i class="ti ti-check"></i> Freigeschalten</span>
+      </div>`;
+    return;
+  }
+
+  if (status === 'pending') {
+    box.innerHTML = `
+      <div class="status-card pending">
+        <div class="status-icon"><i class="ti ti-clock"></i></div>
+        <div class="status-title">Warte auf Freischaltung</div>
+        <div class="status-text">
+          Du hast Stripe Connect erfolgreich eingerichtet.<br>
+          Dein Antrag wird vom Administrator geprüft – das dauert 1–2 Werktage.
+        </div>
+        <div class="schritte">
+          <div class="schritt done"><div class="schritt-nr">✅ Schritt 1</div><div class="schritt-text"><strong>Stripe eingerichtet</strong>Bankdaten hinterlegt</div></div>
+          <div class="schritt done"><div class="schritt-nr">✅ Schritt 2</div><div class="schritt-text"><strong>Antrag gesendet</strong>Wird geprüft</div></div>
+          <div class="schritt"><div class="schritt-nr">⏳ Schritt 3</div><div class="schritt-text"><strong>Admin-Freischaltung</strong>Ausstehend</div></div>
+        </div>
+        <span class="warten-badge"><i class="ti ti-clock"></i> Prüfung läuft – bitte warten</span>
+      </div>`;
+    return;
+  }
+
+  // Gesperrt / noch nicht eingerichtet
+  const stripeUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${STRIPE_CLIENT_ID}&scope=read_write&state=${encodeURIComponent(btoa(Math.random().toString()))}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+
+  box.innerHTML = `
+    <div class="status-card gesperrt">
+      <div class="status-icon"><i class="ti ti-lock"></i></div>
+      <div class="status-title">Profil noch gesperrt</div>
+      <div class="status-text">
+        Hallo ${name}! Um Aufträge anzunehmen und dein Profil für Kunden freizuschalten,
+        musst du zuerst Stripe Connect einrichten.
+      </div>
+      <div class="schritte">
+        <div class="schritt"><div class="schritt-nr">Schritt 1</div><div class="schritt-text"><strong>Stripe einrichten</strong>Bankverbindung für Auszahlungen hinterlegen</div></div>
+        <div class="schritt"><div class="schritt-nr">Schritt 2</div><div class="schritt-text"><strong>Admin-Prüfung</strong>Dein Antrag wird geprüft (1–2 Tage)</div></div>
+        <div class="schritt"><div class="schritt-nr">Schritt 3</div><div class="schritt-text"><strong>Freischaltung</strong>Profil sichtbar, Aufträge möglich</div></div>
+      </div>
+      <a href="${stripeUrl}" class="btn-stripe">
+        <span class="stripe-logo">💳</span> Stripe Connect einrichten
+      </a>
+      <p style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1rem">
+        Du wirst zu Stripe weitergeleitet – sicher & verschlüsselt
+      </p>
+    </div>`;
+}
+
+init();
+</script>
+</body>
+</html>

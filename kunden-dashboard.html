@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mein Bereich – Grün & Garten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-900: #173404; --green-800: #27500A; --green-700: #3B6D11;
+      --green-600: #639922; --green-200: #C0DD97; --green-100: #EAF3DE;
+      --amber-800: #633806; --amber-600: #BA7517; --amber-200: #FAC775; --amber-100: #FAEEDA;
+      --gray-800: #2C2C2A; --gray-600: #5F5E5A; --gray-200: #D3D1C7; --gray-100: #F1EFE8;
+      --red-100: #FEE2E2; --red-600: #DC2626; --red-800: #991B1B;
+      --blue-100: #EFF6FF; --blue-600: #2563EB; --blue-800: #1E40AF;
+      --white: #ffffff; --bg: #f5f8f0;
+      --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --tr: 0.2s ease;
+      --k-bg: #f5f8f0; --k-card: #ffffff; --k-header: #633806;
+      --k-accent: #BA7517; --k-text: #2C2C2A; --k-text2: #5F5E5A;
+      --k-border: #FAC775; --k-btn: #BA7517; --k-btn-text: #ffffff;
+    }
+    body { font-family:'DM Sans',sans-serif; color:var(--k-text); background:var(--k-bg); min-height:100vh; }
+
+    .navbar { position:sticky; top:0; z-index:300; background:rgba(255,255,255,0.93); backdrop-filter:blur(12px); border-bottom:1px solid var(--amber-200); height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 2rem; }
+    .logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--green-800); text-decoration:none; }
+    .logo em { color:var(--amber-600); font-style:normal; }
+    .nav-right { display:flex; align-items:center; gap:8px; }
+    .nbtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--amber-200); background:transparent; color:var(--amber-800); transition:all var(--tr); text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .nbtn:hover { background:var(--amber-100); }
+    .nbtn.primary { background:var(--amber-600); color:#fff; border-color:var(--amber-600); }
+
+    .editor-bar { background:var(--amber-800); color:#fff; padding:8px 2rem; display:none; align-items:center; gap:10px; flex-wrap:wrap; position:sticky; top:64px; z-index:299; }
+    .editor-bar.on { display:flex; }
+    .eb-btn { font-size:12px; font-weight:500; padding:5px 12px; border-radius:7px; cursor:pointer; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.12); color:#fff; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; transition:background var(--tr); }
+    .eb-btn:hover { background:rgba(255,255,255,0.22); }
+    .eb-btn.save { background:var(--amber-600); border-color:var(--amber-600); }
+
+    /* PROFIL HEADER */
+    .profil-header { background:var(--k-header); padding:2.5rem 2rem 2rem; position:relative; overflow:hidden; }
+    .profil-header::before { content:''; position:absolute; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%); top:-100px; right:-60px; pointer-events:none; }
+    .ph-inner { max-width:900px; margin:0 auto; display:flex; align-items:flex-end; gap:1.5rem; flex-wrap:wrap; }
+    .ph-avatar { width:90px; height:90px; border-radius:50%; background:rgba(255,255,255,0.15); border:3px solid rgba(255,255,255,0.35); display:flex; align-items:center; justify-content:center; font-size:32px; color:rgba(255,255,255,0.7); overflow:hidden; cursor:pointer; position:relative; flex-shrink:0; }
+    .ph-avatar img { width:100%; height:100%; object-fit:cover; display:none; }
+    .ph-avatar-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity var(--tr); color:#fff; font-size:18px; }
+    .ph-avatar:hover .ph-avatar-overlay { opacity:1; }
+    .ph-info { flex:1; min-width:200px; }
+    .ph-name { font-family:'Playfair Display',serif; font-size:clamp(1.4rem,3vw,1.9rem); font-weight:700; color:#fff; margin-bottom:4px; }
+    .ph-sub { font-size:13px; color:rgba(255,255,255,0.65); margin-bottom:8px; }
+    .ph-badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .ph-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; }
+    .ph-nr { font-family:'Courier New',monospace; font-weight:700; letter-spacing:1px; }
+    /* Adresse Box – privat, nur für den Kunden selbst sichtbar */
+    .adresse-box { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:var(--r-md); padding:10px 14px; font-size:12px; color:rgba(255,255,255,0.8); line-height:1.6; margin-top:6px; }
+    .adresse-box strong { color:#fff; display:block; margin-bottom:2px; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+    .adresse-stadtteil { font-size:14px; color:#fff; font-weight:500; }
+    .adresse-voll { font-size:12px; color:rgba(255,255,255,0.6); margin-top:2px; }
+    .adresse-privat { font-size:11px; color:rgba(255,255,255,0.45); margin-top:4px; display:flex; align-items:center; gap:4px; }
+    .ph-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+
+    .dashboard-body { max-width:900px; margin:0 auto; padding:1.5rem 2rem 3rem; }
+    .dash-grid { display:grid; grid-template-columns:1fr 320px; gap:18px; align-items:start; }
+
+    /* KARTEN */
+    .card { background:var(--k-card); border:1px solid var(--k-border); border-radius:var(--r-xl); padding:1.5rem; margin-bottom:16px; box-shadow:0 2px 12px rgba(186,117,23,0.07); }
+    .card:last-child { margin-bottom:0; }
+    .card-title { font-size:13px; font-weight:500; color:var(--amber-800); display:flex; align-items:center; justify-content:space-between; margin-bottom:1.1rem; padding-bottom:10px; border-bottom:1px solid var(--amber-100); }
+    .ct-left { display:flex; align-items:center; gap:7px; }
+    .ct-left i { font-size:16px; color:var(--k-accent); }
+    .ct-btn { font-size:11px; color:var(--k-accent); cursor:pointer; background:none; border:none; font-family:'DM Sans',sans-serif; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:3px; transition:background var(--tr); }
+    .ct-btn:hover { background:var(--amber-100); }
+
+    .drag-handle { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:5px; background:var(--amber-100); color:var(--amber-600); display:none; align-items:center; justify-content:center; font-size:13px; cursor:grab; z-index:10; }
+    .edit-mode .drag-handle { display:flex; }
+    .edit-mode .card { position:relative; cursor:default; padding-left:2.5rem; }
+    .card.dragging { opacity:0.4; }
+    .card.drag-over { border:2px dashed var(--amber-600) !important; background:var(--amber-100); }
+
+    .warn-box { background:#FEF3C7; border:1px solid #FDE68A; border-radius:var(--r-lg); padding:12px 14px; margin-bottom:1rem; display:flex; gap:10px; }
+    .warn-box i { font-size:16px; color:#D97706; flex-shrink:0; margin-top:1px; }
+    .warn-box p { font-size:12px; color:#92400E; line-height:1.6; }
+    .warn-box strong { display:block; margin-bottom:3px; }
+
+    /* AUFTRAG FORMULAR */
+    .fg { margin-bottom:12px; }
+    .fg label { display:block; font-size:12px; font-weight:500; color:var(--amber-800); margin-bottom:5px; }
+    .fg input, .fg textarea, .fg select { width:100%; padding:10px 13px; border-radius:var(--r-md); border:1px solid var(--amber-200); background:#fffdf8; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--k-text); outline:none; transition:border-color var(--tr); appearance:none; }
+    .fg textarea { resize:vertical; min-height:70px; line-height:1.6; }
+    .fg input:focus, .fg textarea:focus, .fg select:focus { border-color:var(--amber-600); box-shadow:0 0 0 3px rgba(186,117,23,0.12); }
+    .fg .hint { font-size:11px; color:var(--k-text2); margin-top:4px; }
+    .fg-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    /* FÜR-JEMANDEN */
+    .fuer-toggle { display:flex; align-items:center; gap:8px; margin-bottom:10px; cursor:pointer; padding:10px 12px; background:var(--amber-100); border-radius:var(--r-md); border:1px solid var(--amber-200); transition:background var(--tr); }
+    .fuer-toggle:hover { background:var(--amber-200); }
+    .fuer-toggle input[type=checkbox] { width:16px; height:16px; accent-color:var(--amber-600); cursor:pointer; flex-shrink:0; }
+    .fuer-toggle label { cursor:pointer; font-size:13px; color:var(--amber-800); font-weight:500; }
+    .fuer-box { background:#FFFBF0; border:1px solid var(--amber-200); border-radius:var(--r-md); padding:12px; margin-bottom:12px; display:none; }
+    .fuer-box.open { display:block; }
+
+    /* PROBLEM TAGS */
+    .problem-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:7px; margin-bottom:12px; }
+    .prob-tag { padding:8px 10px; border-radius:var(--r-md); border:1px solid var(--amber-200); background:#fffdf8; font-size:12px; color:var(--k-text); cursor:pointer; display:flex; align-items:center; gap:5px; transition:all var(--tr); user-select:none; }
+    .prob-tag i { font-size:14px; color:var(--k-accent); }
+    .prob-tag.selected { background:var(--amber-100); border-color:var(--amber-600); color:var(--amber-800); font-weight:500; }
+
+    .werkzeug-toggle { display:flex; gap:8px; margin-bottom:12px; }
+    .wt-btn { flex:1; padding:10px; border-radius:var(--r-md); font-size:13px; font-weight:500; border:1px solid var(--amber-200); background:#fffdf8; color:var(--k-text2); cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:all var(--tr); }
+    .wt-btn.selected.ja { background:#DCFCE7; border-color:#16A34A; color:#166534; }
+    .wt-btn.selected.nein { background:var(--red-100); border-color:var(--red-600); color:var(--red-800); }
+
+    .wt-grid { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .wd-btn { padding:7px 12px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid var(--amber-200); background:#fffdf8; color:var(--k-text2); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all var(--tr); user-select:none; }
+    .wd-btn.selected { background:var(--amber-600); color:#fff; border-color:var(--amber-600); }
+
+    .auftrag-senden-btn { width:100%; padding:12px; border-radius:var(--r-lg); background:var(--k-btn); color:var(--k-btn-text); border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:all var(--tr); }
+    .auftrag-senden-btn:hover { background:var(--amber-800); transform:translateY(-1px); }
+    .auftrag-senden-btn:disabled { background:var(--gray-200); cursor:not-allowed; transform:none; }
+
+    /* AUFTRÄGE */
+    .auftrag-liste { display:flex; flex-direction:column; gap:10px; }
+    .auftrag-item { background:var(--bg); border:1px solid var(--amber-200); border-radius:var(--r-lg); padding:1rem; position:relative; transition:all var(--tr); }
+    .auftrag-item.deaktiviert { opacity:0.6; border-color:var(--gray-200); background:var(--gray-100); }
+    .ai-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .ai-titel { font-size:14px; font-weight:500; color:var(--amber-800); }
+    .ai-status { font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; flex-shrink:0; }
+    .ai-status.offen { background:#DCFCE7; color:#166534; }
+    .ai-status.angenommen { background:var(--amber-100); color:var(--amber-800); }
+    .ai-status.deaktiviert { background:var(--gray-100); color:var(--gray-600); }
+    .ai-status.abgeschlossen { background:var(--green-100); color:var(--green-800); }
+    .ai-meta { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--k-text2); margin-bottom:8px; }
+    .ai-meta span { display:flex; align-items:center; gap:4px; }
+    .ai-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+    .ai-tag { font-size:11px; padding:3px 8px; border-radius:10px; background:var(--amber-100); color:var(--amber-800); border:1px solid var(--amber-200); }
+    .fuer-badge { font-size:11px; padding:3px 10px; border-radius:10px; background:var(--blue-100); color:var(--blue-800); border:1px solid #BFDBFE; display:inline-flex; align-items:center; gap:4px; margin-bottom:6px; }
+    .ai-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .ai-btn { font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:5px; transition:all var(--tr); }
+    .ai-btn.loeschen { background:var(--red-100); color:var(--red-800); }
+    .ai-btn.loeschen:hover { background:#FECACA; }
+    .ai-btn.neuer-termin { background:var(--amber-100); color:var(--amber-800); }
+    .ai-btn.neuer-termin:hover { background:var(--amber-200); }
+    .ai-btn.erledigt { background:var(--green-100); color:var(--green-800); }
+    .ai-btn.erledigt:hover { background:#a8d879; }
+    .deakt-hinweis { background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:8px 12px; font-size:12px; color:#92400E; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+
+    /* GÄRTNER KARTEN */
+    .gaertner-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .gaertner-card { background:var(--bg); border:1px solid var(--green-200); border-radius:var(--r-lg); padding:1rem; cursor:pointer; transition:all var(--tr); text-decoration:none; display:block; }
+    .gaertner-card:hover { border-color:var(--green-600); box-shadow:0 4px 16px rgba(59,109,17,0.1); transform:translateY(-2px); }
+    .gc-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .gc-avatar { width:42px; height:42px; border-radius:50%; background:var(--green-100); border:2px solid var(--green-200); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--green-600); flex-shrink:0; overflow:hidden; }
+    .gc-avatar img { width:100%; height:100%; object-fit:cover; display:none; }
+    .gc-name { font-size:13px; font-weight:500; color:var(--green-800); margin-bottom:2px; }
+    .gc-plz { font-size:11px; color:var(--k-text2); }
+    .gc-nr { font-size:10px; color:var(--k-text2); font-family:'Courier New',monospace; margin-top:1px; }
+    .gc-tags { display:flex; gap:5px; flex-wrap:wrap; }
+    .gc-tag { font-size:10px; padding:2px 7px; border-radius:10px; background:var(--green-100); color:var(--green-800); border:1px solid var(--green-200); }
+
+    /* GÄRTNER ANGEBOTE AN KUNDEN */
+    .gaertner-angebot-card { background:#F0FDF4; border:1px solid #A7F3D0; border-radius:var(--r-lg); padding:1rem; margin-bottom:10px; }
+    .gaertner-angebot-card:last-child { margin-bottom:0; }
+    .ga-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .ga-name { font-size:14px; font-weight:500; color:var(--green-800); }
+    .ga-preis { font-size:13px; font-weight:700; color:var(--amber-600); white-space:nowrap; }
+    .ga-gaertner { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .ga-av { width:28px; height:28px; border-radius:50%; background:var(--green-100); border:1px solid var(--green-200); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--green-600); flex-shrink:0; overflow:hidden; }
+    .ga-av img { width:100%; height:100%; object-fit:cover; display:none; }
+    .ga-gname { font-size:12px; color:var(--green-800); font-weight:500; }
+    .ga-gnr { font-size:10px; color:var(--k-text2); font-family:'Courier New',monospace; }
+    .ga-meta { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--k-text2); margin-bottom:8px; }
+    .ga-meta span { display:flex; align-items:center; gap:4px; }
+    .ga-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .ga-btn { font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:5px; transition:all var(--tr); text-decoration:none; }
+    .ga-btn.annehmen { background:var(--green-700); color:#fff; }
+    .ga-btn.annehmen:hover { background:var(--green-800); }
+    .ga-btn.profil { background:var(--green-100); color:var(--green-800); }
+    .ga-btn.profil:hover { background:#a8d879; }
+    .ga-btn.ablehnen { background:var(--red-100); color:var(--red-800); }
+    .ga-btn.ablehnen:hover { background:#FECACA; }
+    .section-label { font-size:12px; font-weight:500; margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+
+    /* INFO & KONTO */
+    .info-liste { display:flex; flex-direction:column; gap:10px; }
+    .info-item { font-size:13px; color:var(--k-text2); display:flex; align-items:flex-start; gap:8px; line-height:1.5; }
+    .info-item i { font-size:16px; color:var(--k-accent); flex-shrink:0; margin-top:1px; }
+    .konto-btn { width:100%; padding:11px; border-radius:var(--r-lg); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:all var(--tr); border:none; margin-bottom:8px; }
+    .konto-btn.loeschen { background:var(--red-100); color:var(--red-800); }
+    .konto-btn.loeschen:hover { background:#FECACA; }
+
+    /* FARBEN EDITOR */
+    .farben-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .farbe-item { display:flex; flex-direction:column; gap:5px; }
+    .farbe-item label { font-size:12px; font-weight:500; color:var(--gray-800); }
+    .farbe-item input[type="color"] { width:100%; height:36px; border-radius:8px; border:1px solid var(--amber-200); cursor:pointer; padding:2px; }
+    .farben-vorlagen { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
+    .fv { width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all var(--tr); }
+    .fv:hover { transform:scale(1.15); }
+    .fv.active { border-color:var(--amber-800); }
+
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:600; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:var(--r-xl); padding:1.75rem; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.3rem; }
+    .modal-header h3 { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; color:var(--amber-800); }
+    .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--gray-600); padding:4px; border-radius:6px; }
+    .modal-close:hover { background:var(--bg); }
+    .modal-footer { display:flex; gap:10px; margin-top:1.3rem; }
+    .m-save { flex:1; padding:11px; border-radius:var(--r-lg); background:var(--amber-600); color:#fff; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all var(--tr); }
+    .m-save:hover { background:var(--amber-800); }
+    .m-cancel { padding:11px 18px; border-radius:var(--r-lg); background:transparent; color:var(--gray-600); border:1px solid var(--gray-200); font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; }
+    .m-cancel:hover { background:var(--bg); }
+
+    .leer { font-size:13px; color:var(--k-text2); font-style:italic; padding:0.5rem 0; }
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:999; background:var(--amber-800); color:#fff; padding:11px 18px; border-radius:var(--r-lg); font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px; transform:translateY(80px); opacity:0; transition:all 0.3s ease; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .spinner-wrap { min-height:60vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+    .spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--amber-200); border-top-color:var(--amber-600); animation:spin 0.8s linear infinite; }
+    .divider { height:1px; background:var(--k-border); margin:12px 0; }
+
+    footer { background:var(--green-900); color:var(--green-200); padding:1.5rem; text-align:center; margin-top:2rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--green-100); }
+    .footer-logo em { color:var(--amber-200); font-style:normal; }
+    footer p { font-size:12px; opacity:0.6; margin-top:4px; }
+
+    @media(max-width:700px){ .dash-grid { grid-template-columns:1fr; } .gaertner-grid { grid-template-columns:1fr; } .fg-row { grid-template-columns:1fr; } .farben-grid { grid-template-columns:1fr; } .dashboard-body { padding:1rem; } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Grün<em>&</em>Garten</a>
+  <div class="nav-right" id="navRight"><span class="nbtn" style="cursor:default;opacity:0.6">Lädt...</span></div>
+</nav>
+
+<div class="editor-bar" id="editorBar">
+  <span style="font-size:12px;opacity:0.7">✏️ Bearbeitungsmodus</span>
+  <div style="width:1px;height:18px;background:rgba(255,255,255,0.2)"></div>
+  <button class="eb-btn" id="dragToggle" onclick="toggleDrag()"><i class="ti ti-drag-drop"></i> Verschieben</button>
+  <button class="eb-btn" onclick="openModal('farben')"><i class="ti ti-palette"></i> Farben</button>
+  <button class="eb-btn" onclick="openModal('warnhinweis')"><i class="ti ti-edit"></i> Hinweis</button>
+  <button class="eb-btn save" onclick="speichereAlles()"><i class="ti ti-device-floppy"></i> Speichern</button>
+</div>
+
+<div id="spinnerWrap" class="spinner-wrap">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--gray-600)">Wird geladen...</p>
+</div>
+
+<div id="dashWrap" style="display:none">
+  <div class="profil-header" id="profilHeader">
+    <div class="ph-inner">
+      <div class="ph-avatar" id="phAvatar" onclick="clickAvatar()">
+        <i class="ti ti-user" id="phAvatarIcon"></i>
+        <img id="phAvatarImg" alt="Profilbild" />
+        <div class="ph-avatar-overlay"><i class="ti ti-camera"></i></div>
+      </div>
+      <div class="ph-info">
+        <div class="ph-name" id="phName">–</div>
+        <div class="ph-sub" id="phSub">Kunde</div>
+        <div class="ph-badges">
+          <span class="ph-badge"><i class="ti ti-id-badge" style="font-size:11px"></i> <span class="ph-nr" id="phNr">–</span></span>
+          <span class="ph-badge"><i class="ti ti-shield-check" style="font-size:11px"></i> Verifiziert</span>
+          <span class="ph-badge" id="phStadtteilBadge" style="display:none"><i class="ti ti-map-pin" style="font-size:11px"></i> <span id="phStadtteilText">–</span></span>
+        </div>
+        <!-- Adresse Box: Nur für den Kunden selbst sichtbar -->
+        <div class="adresse-box" id="phAdresseBox" style="display:none">
+          <strong><i class="ti ti-home" style="font-size:11px"></i> Deine hinterlegte Adresse</strong>
+          <div class="adresse-stadtteil" id="phStadtteil2">–</div>
+          <div class="adresse-voll" id="phAdressVoll">–</div>
+          <div class="adresse-privat"><i class="ti ti-lock" style="font-size:10px"></i> Nur nach Auftragsannahme für Gärtner sichtbar</div>
+        </div>
+      </div>
+      <div class="ph-actions">
+        <button class="nbtn" onclick="toggleEditMode()" id="editToggleBtn" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:#fff"><i class="ti ti-edit"></i> Bearbeiten</button>
+        <button class="nbtn" onclick="abmelden()" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)"><i class="ti ti-logout"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-body">
+    <div class="dash-grid">
+      <div id="leftCol"></div>
+      <div id="rightCol"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastText"></span></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-header"><h3 id="modalTitle">–</h3><button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadAvatar(event)" />
+
+<footer>
+  <div class="footer-logo">Grün<em>&</em>Garten</div>
+  <p>Deine Gärtner-Vermittlung · Hannover</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zmryzkmumypvxpidpxcz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptcnl6a211bXlwdnhwaWRweGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDEwNDQsImV4cCI6MjA3NTkxNzA0NH0.bTvCv1x7TZMT0_XuJbHnWxGUizROrGmecF_EnASMX4s';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let user=null, profil=null, kundenProfil=null, meineAuftraege=[], gaertnerListe=[], gaertnerAngebote=[];
+let editMode=false, dragMode=false;
+let blockOrder = { left:['auftrag-erstellen','meine-auftraege'], right:['gaertner-angebote','gaertner-entdecken','info','konto'] };
+let farben = { bg:'#f5f8f0', card:'#ffffff', header:'#633806', accent:'#BA7517', text:'#2C2C2A', text2:'#5F5E5A', border:'#FAC775', btn:'#BA7517', btnText:'#ffffff' };
+let warnText = '';
+
+const FARBEN_VORLAGEN = [
+  { name:'Amber', bg:'#f5f8f0', card:'#ffffff', header:'#633806', accent:'#BA7517', text:'#2C2C2A', text2:'#5F5E5A', border:'#FAC775', btn:'#BA7517', btnText:'#ffffff' },
+  { name:'Grün',  bg:'#f5f8f0', card:'#ffffff', header:'#27500A', accent:'#639922', text:'#2C2C2A', text2:'#5F5E5A', border:'#C0DD97', btn:'#3B6D11', btnText:'#ffffff' },
+  { name:'Blau',  bg:'#F0F7FF', card:'#ffffff', header:'#1E3A5F', accent:'#2563EB', text:'#1E293B', text2:'#64748B', border:'#BFDBFE', btn:'#2563EB', btnText:'#ffffff' },
+  { name:'Dunkel',bg:'#1A1A1A', card:'#2A2A2A', header:'#111111', accent:'#A3E635', text:'#F0F0F0', text2:'#A0A0A0', border:'#3A3A3A', btn:'#4D7C0F', btnText:'#ffffff' },
+  { name:'Rose',  bg:'#FFF1F2', card:'#ffffff', header:'#9F1239', accent:'#E11D48', text:'#1C1917', text2:'#78716C', border:'#FECDD3', btn:'#E11D48', btnText:'#ffffff' },
+];
+
+const PROBLEME = [
+  {icon:'ti-scissors',label:'Rasen mähen'},{icon:'ti-cut',label:'Hecke schneiden'},
+  {icon:'ti-leaf',label:'Unkraut entfernen'},{icon:'ti-tree',label:'Baum beschneiden'},
+  {icon:'ti-plant',label:'Bepflanzung'},{icon:'ti-trash',label:'Gartenabfälle'},
+  {icon:'ti-shovel',label:'Umgraben'},{icon:'ti-snowflake',label:'Winterdienst'},
+  {icon:'ti-droplet',label:'Bewässerung'},{icon:'ti-building',label:'Beete anlegen'},
+  {icon:'ti-brush',label:'Reinigen'},{icon:'ti-bucket',label:'Sonstiges'},
+];
+const WOCHENTAGE = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+// ── INIT ──
+async function init() {
+  const {data:{session}} = await sb.auth.getSession();
+  user = session?.user;
+  if (!user) { window.location.href='anmelden.html'; return; }
+
+  const {data:p} = await sb.from('profile').select('*').eq('id',user.id).single();
+  if (!p || p.rolle !== 'kunde') { window.location.href='anmelden.html'; return; }
+  profil = p;
+
+  if (p.profil_einstellungen) {
+    try {
+      const e = JSON.parse(p.profil_einstellungen);
+      if (e.farben) farben={...farben,...e.farben};
+      if (e.blockOrder) blockOrder={...blockOrder,...e.blockOrder};
+      if (e.warnText) warnText=e.warnText;
+    } catch(_){}
+  }
+
+  // Kunden-Profil (Adresse) laden
+  const {data:kp} = await sb.from('kunden_profil').select('strasse,plz,ort').eq('user_id',user.id).single();
+  kundenProfil = kp || null;
+
+  // Aufträge laden
+  const {data:auftraege} = await sb.from('kunden_auftraege').select('*').eq('kunden_id',user.id).order('erstellt_am',{ascending:false});
+  meineAuftraege = auftraege || [];
+
+  // Abgelaufene Aufträge deaktivieren
+  const heute = new Date(); heute.setHours(0,0,0,0);
+  for (const a of meineAuftraege) {
+    if (a.termin_datum && a.status === 'offen') {
+      const termin = new Date(a.termin_datum);
+      if (termin < heute) {
+        await sb.from('kunden_auftraege').update({status:'deaktiviert'}).eq('id',a.id);
+        a.status = 'deaktiviert';
+      }
+    }
+  }
+
+  // Gärtner laden (mit Nr)
+  const {data:gaertner} = await sb.from('profile')
+    .select('id,anzeigename,vorname,nachname,plz,avatar_url,gaertner_nr')
+    .eq('rolle','gaertner').limit(6);
+  gaertnerListe = gaertner || [];
+
+  // Gärtner-Angebote an diesen Kunden (mit Gärtner-Info + Nr)
+  const {data:angebote} = await sb.from('gaertner_auftraege')
+    .select('*,gaertner:profile!gaertner_id(id,anzeigename,vorname,avatar_url,gaertner_nr)')
+    .eq('kunden_ziel_id',user.id)
+    .order('erstellt_am',{ascending:false});
+  gaertnerAngebote = angebote || [];
+
+  // Debug: Prüfe geladene Profil-Daten
+  console.log('Profil geladen:', { vorname: profil.vorname, stadtteil: profil.stadtteil, kunden_nr: profil.kunden_nr });
+  console.log('Kunden-Profil:', kundenProfil);
+
+  applyFarben();
+  renderDashboard();
+}
+
+function applyFarben() {
+  const r = document.documentElement;
+  r.style.setProperty('--k-bg',farben.bg); r.style.setProperty('--k-card',farben.card);
+  r.style.setProperty('--k-header',farben.header); r.style.setProperty('--k-accent',farben.accent);
+  r.style.setProperty('--k-text',farben.text); r.style.setProperty('--k-text2',farben.text2);
+  r.style.setProperty('--k-border',farben.border); r.style.setProperty('--k-btn',farben.btn);
+  r.style.setProperty('--k-btn-text',farben.btnText);
+  document.getElementById('profilHeader').style.background = farben.header;
+}
+
+function renderDashboard() {
+  // Name: Anzeigename > Vorname+Nachname > 'Kunde' (niemals E-Mail oder leere Strings)
+  let anzeigeName = 'Kunde';
+  if (profil.anzeigename && profil.anzeigename.trim()) {
+    anzeigeName = profil.anzeigename.trim();
+  } else if (profil.vorname && profil.vorname.trim()) {
+    anzeigeName = profil.vorname.trim();
+    if (profil.nachname && profil.nachname.trim()) {
+      anzeigeName += ' ' + profil.nachname.trim();
+    }
+  }
+  // Sicherheitscheck: niemals E-Mail als Namen anzeigen
+  if (anzeigeName.includes('@')) anzeigeName = 'Kunde';
+  document.getElementById('phName').textContent = anzeigeName;
+  document.getElementById('phNr').textContent = profil.kunden_nr || '–';
+  if (profil.beschreibung) document.getElementById('phSub').textContent = profil.beschreibung;
+  if (profil.avatar_url) {
+    document.getElementById('phAvatarImg').src = profil.avatar_url;
+    document.getElementById('phAvatarImg').style.display = 'block';
+    document.getElementById('phAvatarIcon').style.display = 'none';
+  }
+
+  // Stadtteil Badge anzeigen – alle möglichen Quellen prüfen
+  const stadtteil = profil.stadtteil || kundenProfil?.ort || profil.plz || null;
+  if (stadtteil) {
+    document.getElementById('phStadtteilBadge').style.display = 'inline-flex';
+    document.getElementById('phStadtteilText').textContent = stadtteil;
+  } else {
+    // Kein Stadtteil – Badge zeigt Hinweis
+    document.getElementById('phStadtteilBadge').style.display = 'inline-flex';
+    document.getElementById('phStadtteilBadge').style.background = 'rgba(255,200,100,0.2)';
+    document.getElementById('phStadtteilText').textContent = 'Stadtteil eintragen →';
+    document.getElementById('phStadtteilBadge').style.cursor = 'pointer';
+    document.getElementById('phStadtteilBadge').onclick = () => openModal('profil-bearbeiten');
+  }
+
+  // Adresse Box (nur für Kunden selbst – privat)
+  if (kundenProfil?.strasse) {
+    document.getElementById('phAdresseBox').style.display = 'block';
+    document.getElementById('phStadtteil2').textContent = kundenProfil.ort || kundenProfil.plz || '–';
+    document.getElementById('phAdressVoll').textContent = kundenProfil.strasse + (kundenProfil.plz ? ', '+kundenProfil.plz : '') + (kundenProfil.ort ? ' '+kundenProfil.ort : '');
+  }
+
+  document.getElementById('navRight').innerHTML = `
+    <span style="font-size:12px;color:var(--gray-600)">Hallo ${profil.vorname||'Kunde'}</span>
+    <button class="nbtn" onclick="toggleEditMode()" id="editToggleBtn"><i class="ti ti-edit"></i> Bearbeiten</button>
+    <button class="nbtn" onclick="abmelden()" style="color:#991B1B;border-color:#FECACA"><i class="ti ti-logout"></i></button>
+  `;
+
+  renderBlocks();
+  document.getElementById('spinnerWrap').style.display = 'none';
+  document.getElementById('dashWrap').style.display = 'block';
+}
+
+// ── BLOCKS ──
+const BLOCK_DEFS = {
+  'auftrag-erstellen': { col:'left',  render: renderAuftragErstellen },
+  'meine-auftraege':   { col:'left',  render: renderMeineAuftraege },
+  'gaertner-angebote': { col:'right', render: renderGaertnerAngebote },
+  'gaertner-entdecken':{ col:'right', render: renderGaertnerEntdecken },
+  'info':              { col:'right', render: renderInfo },
+  'konto':             { col:'right', render: renderKonto },
+};
+
+function renderBlocks() {
+  const left = document.getElementById('leftCol');
+  const right = document.getElementById('rightCol');
+  left.innerHTML = ''; right.innerHTML = '';
+  blockOrder.left.forEach(id => { const el=buildBlock(id); if(el) left.appendChild(el); });
+  blockOrder.right.forEach(id => { const el=buildBlock(id); if(el) right.appendChild(el); });
+}
+
+function buildBlock(id) {
+  const def = BLOCK_DEFS[id]; if(!def) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'card'; wrap.dataset.blockId = id;
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle'; handle.innerHTML = '<i class="ti ti-grip-vertical"></i>';
+  wrap.appendChild(handle);
+  handle.addEventListener('mousedown', () => wrap.draggable=true);
+  wrap.addEventListener('dragstart', onDragStart);
+  wrap.addEventListener('dragover', onDragOver);
+  wrap.addEventListener('dragleave', onDragLeave);
+  wrap.addEventListener('drop', onDrop);
+  wrap.addEventListener('dragend', () => { wrap.draggable=false; wrap.classList.remove('dragging'); });
+  wrap.innerHTML += def.render();
+  return wrap;
+}
+
+// ── BLOCK INHALTE ──
+function renderAuftragErstellen() {
+  return `
+    <div class="card-title"><div class="ct-left"><i class="ti ti-clipboard-plus"></i> Auftrag erstellen</div></div>
+    <div class="warn-box" style="margin-bottom:1rem">
+      <i class="ti ti-alert-triangle"></i>
+      <p><strong>Sicherheitshinweis</strong>Keine Telefonnummern oder E-Mails angeben. Verstöße → Konto-Sperrung.</p>
+    </div>
+
+    <!-- FÜR JEMANDEN ANDEREN -->
+    <div class="fuer-toggle" onclick="toggleFuerJemanden()">
+      <input type="checkbox" id="fuerJemandenCheck" onclick="event.stopPropagation()"/>
+      <label for="fuerJemandenCheck"><i class="ti ti-user-heart" style="font-size:14px"></i> Auftrag für jemand anderen (Freund, Familie...)</label>
+    </div>
+    <div class="fuer-box" id="fuerJemandenBox">
+      <div class="fg" style="margin-bottom:8px">
+        <label>Für wen? *</label>
+        <input type="text" id="a_fuer_wen" placeholder="z.B. Meine Mutter / Max Mustermann"/>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Stadtteil der Person</label>
+        <input type="text" id="a_fuer_stadtteil" placeholder="z.B. Hannover-List, Linden..."/>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Genaue Adresse (Straße + Hausnummer)</label>
+        <input type="text" id="a_fuer_adresse" placeholder="z.B. Gartenweg 5, 30159 Hannover"/>
+        <p class="hint">🔒 Wird dem Gärtner erst nach Auftragsannahme mitgeteilt</p>
+      </div>
+    </div>
+
+    <!-- Adresse / Stadtteil des Auftrags -->
+    <div style="background:var(--amber-100);border:1px solid var(--amber-200);border-radius:var(--r-md);padding:12px 14px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:500;color:var(--amber-800);margin-bottom:8px"><i class="ti ti-map-pin"></i> Wo soll der Auftrag stattfinden?</p>
+      <div class="fg" style="margin-bottom:8px">
+        <label>Stadtteil / Ort *</label>
+        <input type="text" id="a_stadtteil" value="" placeholder="z.B. Hannover-Linden, Vahrenwald..."/>
+        <p class="hint">Nur der Stadtteil wird Gärtnern angezeigt – deine genaue Adresse bleibt privat.</p>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Straße & Hausnummer (privat)</label>
+        <input type="text" id="a_strasse" placeholder="z.B. Gartenweg 12"/>
+        <p class="hint" style="color:#92400E">🔒 Wird dem Gärtner erst nach Auftragsannahme mitgeteilt</p>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Titel *</label>
+      <input type="text" id="a_titel" placeholder="z.B. Rasen mähen – großer Garten" maxlength="80"/>
+    </div>
+    <div class="fg">
+      <label>Beschreibung</label>
+      <textarea id="a_beschreibung" rows="3" placeholder="Beschreibe dein Anliegen..."></textarea>
+    </div>
+    <p style="font-size:12px;font-weight:500;color:var(--k-accent);margin-bottom:8px">Oder wähle eine Tätigkeit:</p>
+    <div class="problem-grid" id="problemGrid">
+      ${PROBLEME.map((p,i)=>`<div class="prob-tag" data-idx="${i}" onclick="toggleProblem(this)"><i class="ti ${p.icon}"></i>${p.label}</div>`).join('')}
+    </div>
+    <p style="font-size:12px;font-weight:500;color:var(--k-accent);margin-bottom:8px">Werkzeug vorhanden?</p>
+    <div class="werkzeug-toggle" id="werkzeugToggle">
+      <div class="wt-btn ja" onclick="setWerkzeug(this,'ja')"><i class="ti ti-check"></i> Ja</div>
+      <div class="wt-btn nein" onclick="setWerkzeug(this,'nein')"><i class="ti ti-x"></i> Nein</div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Termin *</label>
+        <input type="date" id="a_datum" min="${new Date().toISOString().split('T')[0]}"/>
+      </div>
+      <div class="fg">
+        <label>Wunschpreis (€)</label>
+        <input type="number" id="a_preis" min="0" placeholder="z.B. 50"/>
+        <p class="hint">Optional</p>
+      </div>
+    </div>
+    <p style="font-size:12px;font-weight:500;color:var(--k-accent);margin-bottom:8px">Wochentag:</p>
+    <div class="wt-grid" id="wochentageGrid">
+      ${WOCHENTAGE.map(t=>`<div class="wd-btn" onclick="this.classList.toggle('selected')">${t}</div>`).join('')}
+      <div class="wd-btn" onclick="this.classList.toggle('selected')">Flexibel</div>
+    </div>
+    <button class="auftrag-senden-btn" onclick="auftragSenden()"><i class="ti ti-send"></i> Auftrag veröffentlichen</button>`;
+}
+
+function renderMeineAuftraege() {
+  const items = meineAuftraege.length > 0
+    ? meineAuftraege.map(a => {
+        const deakt = a.status === 'deaktiviert';
+        const termin = a.termin_datum ? new Date(a.termin_datum) : null;
+        return `
+          <div class="auftrag-item ${deakt?'deaktiviert':''}">
+            <div class="ai-top">
+              <div class="ai-titel">${a.titel||'Kein Titel'}</div>
+              <span class="ai-status ${a.status}">${a.status==='offen'?'Offen':a.status==='angenommen'?'Angenommen':a.status==='deaktiviert'?'Abgelaufen':'Abgeschlossen'}</span>
+            </div>
+            ${a.fuer_wen ? `<div class="fuer-badge"><i class="ti ti-user-heart"></i> Für: ${a.fuer_wen}</div>` : ''}
+            ${a.problem_tags?.length ? `<div class="ai-tags">${a.problem_tags.map(t=>`<span class="ai-tag">${t}</span>`).join('')}</div>` : ''}
+            <div class="ai-meta">
+              ${termin ? `<span><i class="ti ti-calendar"></i>${termin.toLocaleDateString('de-DE')}</span>` : ''}
+              ${a.wochentage?.length ? `<span><i class="ti ti-clock"></i>${a.wochentage.join(', ')}</span>` : ''}
+              ${a.preis ? `<span><i class="ti ti-coin"></i>~${a.preis}€</span>` : ''}
+              <span><i class="ti ti-tool"></i>Werkzeug: ${a.werkzeug==='ja'?'Vorhanden':'Keins'}</span>
+              ${a.stadtteil ? `<span><i class="ti ti-map-pin"></i>${a.stadtteil}</span>` : ''}
+            </div>
+            ${deakt ? `<div class="deakt-hinweis"><i class="ti ti-clock-exclamation"></i>Termin abgelaufen. Neuen Termin wählen oder löschen.</div>` : ''}
+            <div class="ai-actions">
+              ${deakt ? `<button class="ai-btn neuer-termin" onclick="neuenTermin('${a.id}')"><i class="ti ti-calendar-plus"></i> Neuer Termin</button>` : ''}
+              ${a.status==='angenommen' ? `<button class="ai-btn erledigt" onclick="auftragErledigt('${a.id}')"><i class="ti ti-check"></i> Erledigt</button>` : ''}
+              <button class="ai-btn loeschen" onclick="auftragLoeschen('${a.id}')"><i class="ti ti-trash"></i> Löschen</button>
+            </div>
+          </div>`;
+      }).join('')
+    : '<p class="leer">Noch keine Aufträge.</p>';
+  return `
+    <div class="card-title"><div class="ct-left"><i class="ti ti-list-check"></i> Meine Aufträge</div></div>
+    <div class="auftrag-liste">${items}</div>`;
+}
+
+function renderGaertnerAngebote() {
+  // Gärtner-Angebote direkt in eigenem Kasten
+  const items = gaertnerAngebote.length > 0
+    ? gaertnerAngebote.map(a => `
+        <div class="gaertner-angebot-card">
+          <div class="ga-top">
+            <div class="ga-name">${a.titel||'Angebot'}</div>
+            <div class="ga-preis">${a.preis ? a.preis+'€' : 'Auf Anfrage'}</div>
+          </div>
+          <div class="ga-gaertner">
+            <div class="ga-av">
+              ${a.gaertner?.avatar_url ? `<img src="${a.gaertner.avatar_url}" onload="this.style.display='block'"/>` : '<i class="ti ti-user"></i>'}
+            </div>
+            <div>
+              <div class="ga-gname">${a.gaertner?.anzeigename||a.gaertner?.vorname||'Gärtner'}</div>
+              ${a.gaertner?.gaertner_nr ? `<div class="ga-gnr">${a.gaertner.gaertner_nr}</div>` : ''}
+            </div>
+          </div>
+          <div class="ga-meta">
+            ${a.dauer ? `<span><i class="ti ti-clock"></i>${a.dauer}</span>` : ''}
+            ${a.jahreszeit ? `<span><i class="ti ti-calendar"></i>${a.jahreszeit}</span>` : ''}
+          </div>
+          <div class="ga-actions">
+            <button class="ga-btn annehmen" onclick="angebotAnnehmen('${a.id}')"><i class="ti ti-check"></i> Annehmen</button>
+            <a href="gaertner-profil.html?id=${a.gaertner_id}" class="ga-btn profil" target="_blank"><i class="ti ti-user"></i> Profil</a>
+            <button class="ga-btn ablehnen" onclick="angebotAblehnen('${a.id}')"><i class="ti ti-x"></i> Ablehnen</button>
+          </div>
+        </div>`).join('')
+    : '<p class="leer">Noch keine Gärtner-Angebote für dich.</p>';
+  return `
+    <div class="card-title"><div class="ct-left"><i class="ti ti-bell"></i> Gärtner-Angebote für mich</div></div>
+    ${items}`;
+}
+
+function renderGaertnerEntdecken() {
+  const cards = gaertnerListe.length > 0
+    ? gaertnerListe.map(g => `
+        <a href="gaertner-profil.html?id=${g.id}" class="gaertner-card" target="_blank">
+          <div class="gc-top">
+            <div class="gc-avatar">
+              ${g.avatar_url ? `<img src="${g.avatar_url}" onload="this.style.display='block'"/>` : '<i class="ti ti-user"></i>'}
+            </div>
+            <div>
+              <div class="gc-name">${g.anzeigename||g.vorname||'Gärtner'}</div>
+              <div class="gc-plz"><i class="ti ti-map-pin" style="font-size:11px"></i> PLZ ${g.plz||'–'}</div>
+              ${g.gaertner_nr ? `<div class="gc-nr">${g.gaertner_nr}</div>` : ''}
+            </div>
+          </div>
+          <div class="gc-tags"><span class="gc-tag">Verfügbar</span><span class="gc-tag">Verifiziert</span></div>
+        </a>`).join('')
+    : '<p class="leer">Keine Gärtner gefunden.</p>';
+  return `
+    <div class="card-title"><div class="ct-left"><i class="ti ti-plant"></i> Gärtner entdecken</div></div>
+    <div class="gaertner-grid">${cards}</div>`;
+}
+
+function renderInfo() {
+  const warn = warnText || 'Tausche keine Kontaktdaten mit Gärtnern aus. Nur interner Chat. Verstöße → Konto-Sperrung.';
+  return `
+    <div class="card-title">
+      <div class="ct-left"><i class="ti ti-info-circle"></i> Info & Hinweise</div>
+      <button class="ct-btn" id="editWarnBtn" style="display:none" onclick="openModal('warnhinweis')"><i class="ti ti-pencil"></i></button>
+    </div>
+    <div class="warn-box" style="margin-bottom:1rem">
+      <i class="ti ti-shield-exclamation"></i><p id="warnTextAnzeige">${warn}</p>
+    </div>
+    <div class="info-liste">
+      <div class="info-item"><i class="ti ti-id-badge"></i><span>Kundennummer: <strong style="font-family:'Courier New',monospace">${profil.kunden_nr||'–'}</strong></span></div>
+      <div class="info-item"><i class="ti ti-map-pin"></i><span>Stadtteil: <strong>${profil.stadtteil||kundenProfil?.ort||'–'}</strong> (für Gärtner sichtbar – Adresse bleibt privat)</span></div>
+      <div class="info-item"><i class="ti ti-coin"></i><span>Aufträge vergeben erst nach Hinterlegung der Zahlungsdaten.</span></div>
+      <div class="info-item"><i class="ti ti-lock"></i><span>Deine Adresse wird erst nach Auftragsannahme geteilt.</span></div>
+    </div>`;
+}
+
+function renderKonto() {
+  return `
+    <div class="card-title"><div class="ct-left"><i class="ti ti-settings"></i> Konto</div></div>
+    <button class="konto-btn" onclick="window.location.href='geld.html'" style="background:var(--green-100);color:var(--green-800)"><i class="ti ti-credit-card"></i> Zahlungsdaten</button>
+    <button class="konto-btn" onclick="openModal('profil-bearbeiten')" style="background:var(--amber-100);color:var(--amber-800)"><i class="ti ti-user-edit"></i> Profil bearbeiten</button>
+    <button class="konto-btn loeschen" onclick="kontoLoeschen()"><i class="ti ti-trash"></i> Konto löschen</button>
+    <p style="font-size:11px;color:var(--k-text2);margin-top:6px;line-height:1.5">Beim Löschen werden alle Daten unwiderruflich entfernt.</p>`;
+}
+
+// ── FÜR-JEMANDEN ──
+function toggleFuerJemanden() {
+  const check = document.getElementById('fuerJemandenCheck');
+  const box = document.getElementById('fuerJemandenBox');
+  if (!check || !box) return;
+  check.checked = !check.checked;
+  box.classList.toggle('open', check.checked);
+}
+
+// ── AUFTRAG SENDEN ──
+async function auftragSenden() {
+  const titel = document.getElementById('a_titel')?.value.trim();
+  const datum = document.getElementById('a_datum')?.value;
+  if (!titel) { showToast('❌ Bitte Titel eingeben!'); return; }
+  if (!datum) { showToast('❌ Bitte Termin wählen!'); return; }
+
+  const problemTags = [...document.querySelectorAll('#problemGrid .prob-tag.selected')].map(el=>el.textContent.trim());
+  const werkzeugEl = document.querySelector('#werkzeugToggle .wt-btn.selected');
+  const werkzeug = werkzeugEl ? werkzeugEl.classList.contains('ja')?'ja':'nein' : 'keine Angabe';
+  const wochentage = [...document.querySelectorAll('#wochentageGrid .wd-btn.selected')].map(el=>el.textContent.trim());
+  const fuerJemanden = document.getElementById('fuerJemandenCheck')?.checked;
+  const fuerWen = document.getElementById('a_fuer_wen')?.value.trim()||null;
+  const fuerAdresse = document.getElementById('a_fuer_adresse')?.value.trim()||null;
+
+  const auftragStadtteil = fuerJemanden
+    ? (document.getElementById('a_fuer_stadtteil')?.value.trim() || null)
+    : (document.getElementById('a_stadtteil')?.value.trim() || profil.stadtteil || kundenProfil?.ort || null);
+  const auftragStrasse = fuerJemanden
+    ? (document.getElementById('a_fuer_adresse')?.value.trim() || null)
+    : (document.getElementById('a_strasse')?.value.trim() || null);
+
+  const {data,error} = await sb.from('kunden_auftraege').insert({
+    kunden_id: user.id,
+    titel,
+    beschreibung: document.getElementById('a_beschreibung')?.value.trim()||null,
+    problem_tags: problemTags,
+    werkzeug,
+    termin_datum: datum,
+    wochentage,
+    preis: document.getElementById('a_preis')?.value||null,
+    status: 'offen',
+    fuer_wen: fuerJemanden ? fuerWen : null,
+    fuer_adresse: fuerJemanden ? fuerAdresse : auftragStrasse,
+    stadtteil: auftragStadtteil,
+    strasse_privat: auftragStrasse
+  }).select().single();
+
+  if (error) { showToast('❌ Fehler: '+error.message); return; }
+  meineAuftraege.unshift(data);
+  showToast('✅ Auftrag veröffentlicht!');
+  renderBlocks();
+}
+
+async function auftragLoeschen(id) {
+  if(!confirm('Auftrag wirklich löschen?')) return;
+  await sb.from('kunden_auftraege').delete().eq('id',id);
+  meineAuftraege = meineAuftraege.filter(a=>a.id!==id);
+  showToast('Auftrag gelöscht'); renderBlocks();
+}
+
+async function neuenTermin(id) {
+  const neuesDatum = prompt('Neues Datum (JJJJ-MM-TT):');
+  if (!neuesDatum) return;
+  const d = new Date(neuesDatum), heute = new Date(); heute.setHours(0,0,0,0);
+  if (d < heute) { showToast('❌ Datum muss in der Zukunft liegen!'); return; }
+  await sb.from('kunden_auftraege').update({termin_datum:neuesDatum,status:'offen'}).eq('id',id);
+  const idx = meineAuftraege.findIndex(a=>a.id===id);
+  if(idx>=0){meineAuftraege[idx].termin_datum=neuesDatum;meineAuftraege[idx].status='offen';}
+  showToast('✅ Termin aktualisiert!'); renderBlocks();
+}
+
+async function auftragErledigt(id) {
+  await sb.from('kunden_auftraege').update({status:'abgeschlossen'}).eq('id',id);
+  const idx=meineAuftraege.findIndex(a=>a.id===id); if(idx>=0) meineAuftraege[idx].status='abgeschlossen';
+  showToast('✅ Als erledigt markiert!'); renderBlocks();
+}
+
+async function angebotAnnehmen(id) {
+  await sb.from('gaertner_auftraege').update({status:'angenommen'}).eq('id',id);
+  showToast('✅ Angebot angenommen!');
+  const idx=gaertnerAngebote.findIndex(a=>a.id===id); if(idx>=0) gaertnerAngebote[idx].status='angenommen';
+  renderBlocks();
+}
+async function angebotAblehnen(id) {
+  if(!confirm('Angebot ablehnen?')) return;
+  await sb.from('gaertner_auftraege').delete().eq('id',id);
+  gaertnerAngebote=gaertnerAngebote.filter(a=>a.id!==id);
+  showToast('Angebot abgelehnt'); renderBlocks();
+}
+
+function toggleProblem(el) { el.classList.toggle('selected'); }
+function setWerkzeug(el,val) { document.querySelectorAll('#werkzeugToggle .wt-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+
+// ── DRAG & DROP ──
+let dragSrc=null;
+function toggleDrag() {
+  dragMode=!dragMode;
+  document.getElementById('dragToggle').classList.toggle('active',dragMode);
+  document.querySelectorAll('.card').forEach(c=>c.style.cursor=dragMode?'grab':'default');
+  showToast(dragMode?'↕️ Verschieben aktiv':'✅ Deaktiviert');
+}
+function onDragStart(e){if(!dragMode){e.preventDefault();return;}dragSrc=this;this.classList.add('dragging');}
+function onDragOver(e){if(!dragMode)return;e.preventDefault();this.classList.add('drag-over');}
+function onDragLeave(){this.classList.remove('drag-over');}
+function onDrop(e){
+  if(!dragMode||dragSrc===this)return;
+  e.preventDefault();this.classList.remove('drag-over');
+  const p=this.parentNode,ch=[...p.children],si=ch.indexOf(dragSrc),ti=ch.indexOf(this);
+  if(si<ti)p.insertBefore(dragSrc,this.nextSibling);else p.insertBefore(dragSrc,this);
+  blockOrder.left=[...document.getElementById('leftCol').children].map(b=>b.dataset.blockId).filter(Boolean);
+  blockOrder.right=[...document.getElementById('rightCol').children].map(b=>b.dataset.blockId).filter(Boolean);
+}
+
+function toggleEditMode() {
+  editMode=!editMode;
+  document.getElementById('editorBar').classList.toggle('on',editMode);
+  document.body.classList.toggle('edit-mode',editMode);
+  document.querySelectorAll('.ct-btn').forEach(b=>b.style.display=editMode?'flex':'none');
+  const btn=document.getElementById('editToggleBtn');
+  if(btn) btn.innerHTML=editMode?'<i class="ti ti-eye"></i> Vorschau':'<i class="ti ti-edit"></i> Bearbeiten';
+}
+
+// ── MODALS ──
+function openModal(typ) {
+  const body=document.getElementById('modalBody'), title=document.getElementById('modalTitle');
+  if (typ==='farben') {
+    title.textContent='Farben anpassen';
+    body.innerHTML=`<div class="farben-vorlagen">${FARBEN_VORLAGEN.map((v,i)=>`<div class="fv" style="background:${v.header}" title="${v.name}" onclick="applyVorlage(${i})"></div>`).join('')}</div>
+    <div class="farben-grid">
+      ${['bg','card','header','accent','text','text2','border','btn','btnText'].map((k,i)=>{
+        const labels=['Hintergrund','Karten','Header','Akzent','Text','Nebentext','Rahmen','Button','Btn-Text'];
+        return `<div class="farbe-item"><label>${labels[i]}</label><input type="color" id="f_${k}" value="${farben[k]}" oninput="liveColor('${k}',this.value)"/></div>`;
+      }).join('')}
+    </div>
+    <div class="modal-footer"><button class="m-cancel" onclick="closeModal()">Abbrechen</button><button class="m-save" onclick="saveFarben()"><i class="ti ti-palette"></i> Speichern</button></div>`;
+  }
+  else if (typ==='warnhinweis') {
+    title.textContent='Warnhinweis';
+    body.innerHTML=`<div class="fg"><label>Text</label><textarea id="m_warn" rows="5">${warnText||'Tausche keine Kontaktdaten...'}</textarea></div>
+    <div class="modal-footer"><button class="m-cancel" onclick="closeModal()">Abbrechen</button><button class="m-save" onclick="saveWarn()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='profil-bearbeiten') {
+    title.textContent='Profil bearbeiten';
+    body.innerHTML=`
+      <div class="fg">
+        <label>Vorname *</label>
+        <input id="m_vorname" value="${profil.vorname||''}" placeholder="z.B. Anna"/>
+      </div>
+      <div class="fg">
+        <label>Nachname *</label>
+        <input id="m_nachname" value="${profil.nachname||''}" placeholder="z.B. Schmidt"/>
+      </div>
+      <div class="fg">
+        <label>Anzeigename (optional)</label>
+        <input id="m_an" value="${profil.anzeigename||''}" placeholder="Wird statt deinem Namen angezeigt"/>
+      </div>
+      <div class="fg">
+        <label>Stadtteil / Ort *</label>
+        <input id="m_stadtteil" value="${profil.stadtteil||kundenProfil?.ort||''}" placeholder="z.B. Hannover-List, Linden, Mitte..."/>
+        <p class="hint">Nur der Stadtteil wird Gärtnern angezeigt – nicht deine genaue Adresse.</p>
+      </div>
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;margin-bottom:1rem;display:flex;gap:8px;align-items:flex-start">
+        <i class="ti ti-lock" style="color:#2563EB;font-size:15px;flex-shrink:0;margin-top:1px"></i>
+        <p style="font-size:12px;color:#1E40AF;line-height:1.6"><strong>Datenschutz:</strong> Deine genaue Adresse (Straße + Hausnummer) ist hier nicht sichtbar und wird nur nach Auftragsannahme mit dem Gärtner geteilt.</p>
+      </div>
+      <div class="fg">
+        <label>Kurze Beschreibung (optional)</label>
+        <textarea id="m_beschr" rows="3" placeholder="z.B. Ich habe einen großen Garten...">${profil.beschreibung||''}</textarea>
+        <p class="hint">Keine Kontaktdaten (Telefon/E-Mail) eintragen!</p>
+      </div>
+      <div class="modal-footer">
+        <button class="m-cancel" onclick="closeModal()">Abbrechen</button>
+        <button class="m-save" onclick="saveProfil()"><i class="ti ti-check"></i> Speichern</button>
+      </div>`;
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeModalOut(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+function liveColor(k,v){farben[k]=v;applyFarben();}
+function applyVorlage(i){
+  farben={...FARBEN_VORLAGEN[i]};applyFarben();
+  document.querySelectorAll('.fv').forEach((v,vi)=>v.classList.toggle('active',vi===i));
+  ['bg','card','header','accent','text','text2','border','btn','btnText'].forEach(k=>{const el=document.getElementById('f_'+k);if(el)el.value=farben[k];});
+}
+async function saveFarben(){['bg','card','header','accent','text','text2','border','btn','btnText'].forEach(k=>{const el=document.getElementById('f_'+k);if(el)farben[k]=el.value;});applyFarben();await speichereEinstellungen();closeModal();showToast('Farben ✅');}
+async function saveWarn(){warnText=document.getElementById('m_warn').value.trim();await speichereEinstellungen();closeModal();showToast('Hinweis ✅');renderBlocks();}
+async function saveProfil(){
+  const an      = document.getElementById('m_an')?.value.trim();
+  const vorname = document.getElementById('m_vorname')?.value.trim();
+  const nachname= document.getElementById('m_nachname')?.value.trim();
+  const beschr  = document.getElementById('m_beschr')?.value.trim();
+  const stadtteil = document.getElementById('m_stadtteil')?.value.trim();
+
+  if (!vorname) { showToast('❌ Bitte Vorname eingeben!'); return; }
+
+  // Profil speichern
+  await sb.from('profile').update({
+    vorname, nachname, anzeigename: an||null,
+    beschreibung: beschr||null,
+    stadtteil: stadtteil||null
+  }).eq('id', user.id);
+
+  // Kunden-Profil Ort aktualisieren (Stadtteil)
+  if (stadtteil && kundenProfil) {
+    await sb.from('kunden_profil').update({ ort: stadtteil }).eq('user_id', user.id);
+    kundenProfil.ort = stadtteil;
+  }
+
+  profil.vorname = vorname;
+  profil.nachname = nachname;
+  profil.anzeigename = an;
+  profil.beschreibung = beschr;
+  profil.stadtteil = stadtteil;
+
+  // Header neu rendern
+  const anzeigeName = an || (vorname + (nachname ? ' '+nachname : ''));
+  document.getElementById('phName').textContent = anzeigeName;
+  if (beschr) document.getElementById('phSub').textContent = beschr;
+
+  // Stadtteil Badge aktualisieren
+  if (stadtteil) {
+    document.getElementById('phStadtteilBadge').style.display = 'inline-flex';
+    document.getElementById('phStadtteilText').textContent = stadtteil;
+  }
+
+  closeModal(); showToast('Profil gespeichert ✅');
+}
+async function speichereEinstellungen(){const e=JSON.stringify({farben,blockOrder,warnText});await sb.from('profile').update({profil_einstellungen:e}).eq('id',user.id);profil.profil_einstellungen=e;}
+async function speichereAlles(){await speichereEinstellungen();showToast('✅ Gespeichert!');}
+
+// ── AVATAR ──
+function clickAvatar(){document.getElementById('avatarFileInput').click();}
+async function uploadAvatar(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>2*1024*1024){showToast('❌ Max. 2 MB');return;}
+  const ext=file.name.split('.').pop(),path=`avatars/k_${user.id}.${ext}`;
+  const {error}=await sb.storage.from('profile-images').upload(path,file,{upsert:true});
+  if(error){showToast('❌ Upload fehlgeschlagen');return;}
+  const {data}=sb.storage.from('profile-images').getPublicUrl(path);
+  await sb.from('profile').update({avatar_url:data.publicUrl}).eq('id',user.id);
+  document.getElementById('phAvatarImg').src=data.publicUrl+'?t='+Date.now();
+  document.getElementById('phAvatarImg').style.display='block';
+  document.getElementById('phAvatarIcon').style.display='none';
+  showToast('Profilbild ✅');
+}
+
+async function kontoLoeschen(){
+  if(!confirm('Konto KOMPLETT löschen?\n\nAlle Daten unwiderruflich gelöscht.'))return;
+  if(!confirm('LETZTE WARNUNG: Endgültig löschen?'))return;
+  showToast('⏳ Wird gelöscht...');
+  try{await sb.from('kunden_auftraege').delete().eq('kunden_id',user.id);await sb.from('profile').delete().eq('id',user.id);}catch(_){}
+  await sb.auth.signOut();window.location.href='index.html';
+}
+async function abmelden(){await sb.auth.signOut();window.location.href='index.html';}
+
+function showToast(t){const el=document.getElementById('toast');document.getElementById('toastText').textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+
+init();
+</script>
+</body>
+</html>

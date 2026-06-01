@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grün & Garten – Deine Gärtner-Vermittlung</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --green-900: #173404;
+      --green-800: #27500A;
+      --green-700: #3B6D11;
+      --green-600: #639922;
+      --green-200: #C0DD97;
+      --green-100: #EAF3DE;
+      --amber-800: #633806;
+      --amber-600: #BA7517;
+      --amber-200: #FAC775;
+      --amber-100: #FAEEDA;
+      --gray-800: #2C2C2A;
+      --gray-600: #5F5E5A;
+      --gray-200: #D3D1C7;
+      --gray-100: #F1EFE8;
+      --white: #ffffff;
+      --bg-page: #f5f8f0;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --shadow-card: 0 2px 16px rgba(59, 109, 17, 0.08);
+      --shadow-hover: 0 6px 28px rgba(59, 109, 17, 0.14);
+      --transition: 0.22s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--gray-800);
+      background: var(--bg-page);
+      line-height: 1.6;
+    }
+
+    /* ── NAVBAR ─────────────────────────────────────── */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--green-200);
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green-800);
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+    .logo em {
+      color: var(--amber-600);
+      font-style: normal;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 9px 20px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      border: 1px solid var(--green-200);
+      background: transparent;
+      color: var(--green-800);
+      transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: var(--green-100);
+    }
+    .btn.primary {
+      background: var(--green-700);
+      color: var(--white);
+      border-color: var(--green-700);
+    }
+    .btn.primary:hover {
+      background: var(--green-800);
+      border-color: var(--green-800);
+      transform: translateY(-1px);
+    }
+    .btn.amber {
+      background: var(--amber-600);
+      color: var(--white);
+      border-color: var(--amber-600);
+    }
+    .btn.amber:hover {
+      background: var(--amber-800);
+      border-color: var(--amber-800);
+      transform: translateY(-1px);
+    }
+
+    /* ── HERO ───────────────────────────────────────── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 6rem 2rem 5rem;
+      text-align: center;
+      background: linear-gradient(150deg, #eef6e4 0%, #fdf9ee 55%, #f5f8f0 100%);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+    .hero::before {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, var(--green-200), transparent 70%);
+      top: -160px; right: -100px;
+    }
+    .hero::after {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, var(--amber-200), transparent 70%);
+      bottom: -120px; left: -80px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--amber-100);
+      color: var(--amber-800);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 30px;
+      border: 1px solid var(--amber-200);
+      margin-bottom: 1.6rem;
+      letter-spacing: 0.4px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      color: var(--green-800);
+      line-height: 1.13;
+      margin-bottom: 1.3rem;
+    }
+    .hero h1 em {
+      color: var(--amber-600);
+      font-style: italic;
+    }
+
+    .hero-sub {
+      font-size: 16.5px;
+      color: var(--gray-600);
+      max-width: 500px;
+      margin: 0 auto 2.6rem;
+      line-height: 1.75;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero-btns .btn {
+      font-size: 15px;
+      padding: 13px 28px;
+      border-radius: var(--radius-lg);
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      margin-top: 3.5rem;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green-700);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+
+    /* ── SECTIONS ───────────────────────────────────── */
+    section { padding: 5rem 2rem; }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .section-header .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--green-600);
+      margin-bottom: .7rem;
+    }
+    .section-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--green-800);
+      line-height: 1.2;
+    }
+    .section-header p {
+      font-size: 15px;
+      color: var(--gray-600);
+      max-width: 480px;
+      margin: .8rem auto 0;
+      line-height: 1.7;
+    }
+
+    /* ── VORTEILE ───────────────────────────────────── */
+    .features-section {
+      background: var(--white);
+      border-top: 1px solid var(--green-200);
+      border-bottom: 1px solid var(--green-200);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-page);
+      border: 0.5px solid var(--green-200);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 1.5rem;
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+    .feature-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 1.1rem;
+    }
+    .feature-icon.g { background: var(--green-100); color: var(--green-700); }
+    .feature-icon.a { background: var(--amber-100); color: var(--amber-600); }
+    .feature-card h3 {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--green-800);
+      margin-bottom: 6px;
+    }
+    .feature-card p {
+      font-size: 13.5px;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+
+    /* ── ZWEI BEREICHE ──────────────────────────────── */
+    .areas-section { background: var(--bg-page); }
+
+    .areas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .area-card {
+      border-radius: var(--radius-xl);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .area-card.gaertner {
+      background: var(--green-100);
+      border: 1px solid var(--green-200);
+    }
+    .area-card.kunde {
+      background: var(--amber-100);
+      border: 1px solid var(--amber-200);
+    }
+    .area-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .area-card.gaertner h3 { color: var(--green-800); }
+    .area-card.kunde h3 { color: var(--amber-800); }
+    .area-list {
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+    .area-list li {
+      font-size: 14px;
+      color: var(--gray-600);
+      padding: 5px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.5;
+    }
+    .area-list li i {
+      color: var(--green-600);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .area-card.kunde .area-list li i { color: var(--amber-600); }
+    .area-deco {
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      font-size: 100px;
+      opacity: 0.12;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ── SO FUNKTIONIERT'S ──────────────────────────── */
+    .how-section {
+      background: var(--white);
+      border-top: 1px solid var(--green-200);
+      border-bottom: 1px solid var(--green-200);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+      position: relative;
+    }
+
+    .step-item {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 50%;
+      transform: translateY(-50%);
+      height: 40%; width: 1px;
+      background: var(--green-200);
+    }
+    .step-num {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--green-700);
+      color: var(--white);
+      font-weight: 500; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 12px rgba(59,109,17,0.25);
+    }
+    .step-item h4 {
+      font-size: 14px; font-weight: 500;
+      color: var(--green-800); margin-bottom: 5px;
+    }
+    .step-item p {
+      font-size: 12.5px; color: var(--gray-600); line-height: 1.6;
+    }
+
+    /* ── CTA BANNER ─────────────────────────────────── */
+    .cta-section {
+      background: var(--green-800);
+      padding: 5rem 2rem;
+    }
+    .cta-inner {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .cta-inner h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 700;
+      color: var(--green-100);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .cta-inner p {
+      font-size: 15px;
+      color: var(--green-200);
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+    .cta-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-btns .btn {
+      font-size: 15px;
+      padding: 13px 28px;
+      border-radius: var(--radius-lg);
+    }
+    .btn.light {
+      background: var(--green-100);
+      color: var(--green-800);
+      border-color: var(--green-100);
+    }
+    .btn.light:hover {
+      background: var(--white);
+      border-color: var(--white);
+    }
+    .btn.outline-light {
+      background: transparent;
+      color: var(--green-200);
+      border-color: var(--green-600);
+    }
+    .btn.outline-light:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ── FOOTER ─────────────────────────────────────── */
+    footer {
+      background: var(--green-900);
+      color: var(--green-200);
+      padding: 2.5rem;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700;
+      color: var(--green-100);
+      margin-bottom: .6rem;
+    }
+    .footer-logo em { color: var(--amber-200); font-style: normal; }
+    footer p { font-size: 13px; color: var(--green-200); opacity: 0.7; }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 1rem 0;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--green-200);
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity var(--transition);
+    }
+    .footer-links a:hover { opacity: 1; }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .navbar { padding: 0 1.2rem; }
+      .logo { font-size: 20px; }
+      section { padding: 3.5rem 1.2rem; }
+      .areas-grid { grid-template-columns: 1fr; }
+      .step-item:not(:last-child)::after { display: none; }
+      .hero-stats { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAVBAR ───────────────────────────── -->
+  <nav class="navbar" aria-label="Hauptnavigation">
+    <a href="index.html" class="logo">Grün<em>&</em>Garten</a>
+    <div class="nav-right">
+      <a href="konto.html" class="btn">
+        <i class="ti ti-user-plus" aria-hidden="true"></i> Registrieren
+      </a>
+      <a href="anmelden.html" class="btn primary">
+        <i class="ti ti-login" aria-hidden="true"></i> Anmelden
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ─────────────────────────────── -->
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="badge">
+        <i class="ti ti-leaf" aria-hidden="true"></i>
+        Gärtner-Vermittlung ohne Abo
+      </div>
+      <h1>Gärtner finden.<br>Aufträge vergeben.<br><em>Einfach &amp; sicher.</em></h1>
+      <p class="hero-sub">
+        Verbinde dich mit zuverlässigen Gärtnern in deiner Nähe –
+        oder biete deine Dienste als Gärtner an.
+        Kein Abo, faire 10&nbsp;% Provision pro Auftrag.
+      </p>
+      <div class="hero-btns">
+        <a href="gaertner.html" class="btn primary">
+          <i class="ti ti-plant" aria-hidden="true"></i> Als Gärtner starten
+        </a>
+        <a href="kunden.html" class="btn amber">
+          <i class="ti ti-search" aria-hidden="true"></i> Gärtner suchen
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">0&nbsp;€</div>
+          <div class="stat-label">Monatliche Kosten</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">10&nbsp;%</div>
+          <div class="stat-label">Provision pro Auftrag</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100&nbsp;%</div>
+          <div class="stat-label">Sicherer Chat</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── VORTEILE ──────────────────────────── -->
+  <section class="features-section" id="vorteile">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Warum wir?</span>
+        <h2>Alles was du brauchst – nichts was du nicht brauchst</h2>
+        <p>Einfach, sicher und fair gestaltet – für Gärtner und Kunden gleichermaßen.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon g"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+          <h3>Sicherer interner Chat</h3>
+          <p>Keine Telefonnummern oder E-Mail-Adressen nötig. Kommunikation läuft ausschließlich über unseren verschlüsselten Chat.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon a"><i class="ti ti-coin" aria-hidden="true"></i></div>
+          <h3>Kein Abo – nur 10 % Provision</h3>
+          <p>Du zahlst nur bei Erfolg. Lediglich 10&nbsp;% des Auftragswertes gehen an uns – sonst keine versteckten Gebühren.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon g"><i class="ti ti-map-pin" aria-hidden="true"></i></div>
+          <h3>Lokal & in der Nähe</h3>
+          <p>Gärtner finden Kunden in ihrer Region. Kunden sehen Gärtner aus ihrer Nähe – schnell und unkompliziert.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon g"><i class="ti ti-id-badge" aria-hidden="true"></i></div>
+          <h3>Eigenes Profil</h3>
+          <p>Gärtner präsentieren Erfahrungen, Ausbildungen und Fotos ihrer Arbeit auf ihrer persönlichen Profilseite.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon a"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>
+          <h3>Aufträge per Knopfdruck</h3>
+          <p>Kunden erstellen einen Auftrag. Gärtner in der Nähe sehen ihn und schicken ihr Angebot – direkt und transparent.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon g"><i class="ti ti-lock" aria-hidden="true"></i></div>
+          <h3>Voller Datenschutz</h3>
+          <p>Kunden sehen keine anderen Kundenaufträge. Gärtner sehen keine Gärtner-Posts der Konkurrenz. Privatsphäre zuerst.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ZWEI BEREICHE ─────────────────────── -->
+  <section class="areas-section" id="bereiche">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Zwei Bereiche</span>
+        <h2>Für Gärtner und Kunden</h2>
+        <p>Jeder bekommt seinen eigenen Bereich – mit genau den Funktionen, die er braucht.</p>
+      </div>
+      <div class="areas-grid">
+        <div class="area-card gaertner">
+          <div class="area-deco">🌱</div>
+          <h3>Für Gärtner</h3>
+          <ul class="area-list">
+            <li><i class="ti ti-check" aria-hidden="true"></i> Eigenes Profil mit Foto, Name &amp; Leistungen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Lizenzfreie Tätigkeiten eintragen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Portfolio: frühere Arbeiten &amp; Ausbildungen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Posts veröffentlichen – nur Kunden sehen diese</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Kunden in der Nähe finden &amp; Angebot senden</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Arbeiter-Forum für Austausch unter Kollegen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Auftragsnummer beim Kundenbesuch</li>
+          </ul>
+          <a href="gaertner.html" class="btn primary">
+            <i class="ti ti-plant" aria-hidden="true"></i> Als Gärtner registrieren
+          </a>
+        </div>
+        <div class="area-card kunde">
+          <div class="area-deco">🏡</div>
+          <h3>Für Kunden</h3>
+          <ul class="area-list">
+            <li><i class="ti ti-check" aria-hidden="true"></i> Eigenes Konto mit Name &amp; Standort</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Aufgaben als Post veröffentlichen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Gärtner direkt beauftragen</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Angabe von vorhandenem Werkzeug</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Gefahren auf dem Grundstück angeben</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Sicherer Chat – kein Datenweitergabe</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i> Andere Kundenaufträge bleiben privat</li>
+          </ul>
+          <a href="kunden.html" class="btn amber">
+            <i class="ti ti-search" aria-hidden="true"></i> Gärtner suchen
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SO FUNKTIONIERT'S ─────────────────── -->
+  <section class="how-section" id="wie-es-funktioniert">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Schritt für Schritt</span>
+        <h2>So einfach funktioniert's</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <h4>Konto erstellen</h4>
+          <p>Kostenlose Registrierung als Gärtner oder Kunde. Kein Abo, keine versteckten Kosten.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <h4>Profil aufbauen</h4>
+          <p>Gärtner tragen Foto, Leistungen und Erfahrungen ein. Kunden beschreiben Standort und Aufgabe.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <h4>Auftrag posten</h4>
+          <p>Kunden veröffentlichen ihre Aufgabe. Gärtner in der Nähe sehen sie und machen ein Angebot.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <h4>Sicher chatten</h4>
+          <p>Kommunikation läuft intern. Keine Telefonnummern oder E-Mails nötig.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <h4>Auftrag abschließen</h4>
+          <p>Auftrag erledigt? Gärtner erhält seine Zahlung, wir bekommen nur 10&nbsp;% Provision.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ──────────────────────────────── -->
+  <section class="cta-section" id="registrieren">
+    <div class="cta-inner">
+      <h2>Bereit loszulegen?</h2>
+      <p>Registriere dich jetzt kostenlos – egal ob du Gärtner bist oder einen suchst. Kein Abo, keine Verpflichtungen.</p>
+      <div class="cta-btns">
+        <a href="gaertner.html" class="btn light">
+          <i class="ti ti-plant" aria-hidden="true"></i> Als Gärtner starten
+        </a>
+        <a href="kunden.html" class="btn outline-light">
+          <i class="ti ti-home" aria-hidden="true"></i> Als Kunde registrieren
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────── -->
+  <footer>
+    <div class="footer-logo">Grün<em>&</em>Garten</div>
+    <div class="footer-links">
+      <a href="#">Impressum</a>
+      <a href="#">Datenschutz</a>
+      <a href="#">AGB</a>
+      <a href="#">Kontakt</a>
+    </div>
+    <p>Deine Gärtner-Vermittlung · Gewerblich betrieben · Hannover</p>
+  </footer>
+
+</body>
+</html>

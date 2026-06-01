@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auftrag erstellen – Grün & Garten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-900:#173404; --green-800:#27500A; --green-700:#3B6D11;
+      --green-600:#639922; --green-200:#C0DD97; --green-100:#EAF3DE;
+      --amber-900:#412402; --amber-800:#633806; --amber-700:#854F0B;
+      --amber-600:#BA7517; --amber-200:#FAC775; --amber-100:#FAEEDA;
+      --gray-800:#2C2C2A; --gray-600:#5F5E5A; --gray-200:#D3D1C7; --gray-100:#F1EFE8;
+      --red-100:#FEE2E2; --red-600:#DC2626; --red-800:#991B1B;
+      --blue-100:#EFF6FF; --blue-600:#2563EB; --blue-800:#1E40AF;
+      --white:#ffffff; --bg:#f5f8f0;
+      --r-md:10px; --r-lg:14px; --r-xl:20px; --tr:0.2s ease;
+    }
+    body { font-family:'DM Sans',sans-serif; color:var(--gray-800); background:var(--bg); min-height:100vh; }
+
+    .navbar { position:sticky; top:0; z-index:300; background:rgba(255,255,255,0.93); backdrop-filter:blur(12px); border-bottom:1px solid var(--green-200); height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 2rem; }
+    .logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--green-800); text-decoration:none; }
+    .logo em { color:var(--amber-600); font-style:normal; }
+    .nbtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--green-200); background:transparent; color:var(--green-800); transition:all var(--tr); text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .nbtn:hover { background:var(--green-100); }
+
+    .page-wrap { max-width:680px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+
+    /* GÄRTNER CARD oben */
+    .gaertner-card {
+      background:var(--white); border:1px solid var(--green-200);
+      border-radius:var(--r-xl); padding:1.2rem 1.5rem; margin-bottom:1.5rem;
+      display:flex; align-items:center; gap:1rem;
+      box-shadow:0 2px 12px rgba(59,109,17,0.07);
+    }
+    .gc-avatar { width:52px; height:52px; border-radius:50%; background:var(--green-100); border:2px solid var(--green-200); display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--green-600); overflow:hidden; flex-shrink:0; }
+    .gc-avatar img { width:100%; height:100%; object-fit:cover; display:none; }
+    .gc-info { flex:1; }
+    .gc-name { font-size:15px; font-weight:500; color:var(--green-800); margin-bottom:2px; }
+    .gc-nr { font-size:11px; color:var(--gray-600); font-family:'Courier New',monospace; }
+    .gc-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+    .gc-tag { font-size:11px; padding:2px 8px; border-radius:10px; background:var(--green-100); color:var(--green-800); border:1px solid var(--green-200); }
+
+    /* FORTSCHRITT */
+    .progress-bar { display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:2rem; }
+    .prog-step { display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .prog-dot { width:30px; height:30px; border-radius:50%; border:2px solid var(--green-200); background:var(--white); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500; color:var(--gray-600); transition:all var(--tr); }
+    .prog-dot.active { border-color:var(--green-700); background:var(--green-700); color:#fff; }
+    .prog-dot.done { border-color:var(--green-600); background:var(--green-100); color:var(--green-600); }
+    .prog-label { font-size:11px; color:var(--gray-600); white-space:nowrap; }
+    .prog-label.active { color:var(--green-700); font-weight:500; }
+    .prog-line { width:50px; height:2px; background:var(--green-200); margin-bottom:20px; }
+    .prog-line.done { background:var(--green-600); }
+
+    /* KARTE */
+    .card { background:var(--white); border:1px solid var(--green-200); border-radius:var(--r-xl); padding:1.75rem; margin-bottom:1.2rem; box-shadow:0 2px 12px rgba(59,109,17,0.06); }
+    .card-title { font-size:14px; font-weight:500; color:var(--green-800); margin-bottom:1.2rem; padding-bottom:10px; border-bottom:1px solid var(--green-100); display:flex; align-items:center; gap:7px; }
+    .card-title i { font-size:17px; color:var(--green-600); }
+
+    /* FELDER */
+    .fg { margin-bottom:13px; }
+    .fg:last-child { margin-bottom:0; }
+    .fg label { display:block; font-size:13px; font-weight:500; color:var(--green-800); margin-bottom:5px; }
+    .fg label .req { color:var(--amber-600); }
+    .fg input, .fg textarea, .fg select {
+      width:100%; padding:10px 13px; border-radius:var(--r-md);
+      border:1px solid var(--green-200); background:#fafcf7;
+      font-family:'DM Sans',sans-serif; font-size:14px; color:var(--gray-800);
+      outline:none; transition:border-color var(--tr); appearance:none;
+    }
+    .fg textarea { resize:vertical; min-height:70px; line-height:1.6; }
+    .fg input:focus, .fg textarea:focus, .fg select:focus { border-color:var(--green-600); box-shadow:0 0 0 3px rgba(99,153,34,0.1); }
+    .fg .hint { font-size:11px; color:var(--gray-600); margin-top:4px; line-height:1.5; }
+    .fg-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    /* TAGE GRID – nur verfügbare Tage des Gärtners */
+    .tage-grid { display:flex; gap:7px; flex-wrap:wrap; }
+    .tag-btn {
+      padding:8px 16px; border-radius:20px; font-size:13px; font-weight:500;
+      border:1.5px solid var(--green-200); background:#fafcf7; color:var(--gray-600);
+      cursor:pointer; font-family:'DM Sans',sans-serif; transition:all var(--tr); user-select:none;
+    }
+    .tag-btn.available { border-color:var(--green-600); color:var(--green-700); background:var(--green-100); }
+    .tag-btn.selected { background:var(--green-700); color:#fff; border-color:var(--green-700); }
+    .tag-btn.unavailable { opacity:0.35; cursor:not-allowed; text-decoration:line-through; }
+
+    /* KOSTEN RECHNER */
+    .kosten-wrap { background:var(--green-100); border:1px solid var(--green-200); border-radius:var(--r-lg); padding:1rem 1.2rem; }
+    .kosten-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:13px; color:var(--gray-800); }
+    .kosten-row:last-child { margin-bottom:0; border-top:1px solid var(--green-200); padding-top:8px; font-weight:500; font-size:14px; color:var(--green-800); }
+    .kosten-input { width:100px; padding:6px 10px; border-radius:8px; border:1px solid var(--green-200); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--gray-800); text-align:right; outline:none; background:var(--white); }
+    .kosten-input:focus { border-color:var(--green-600); }
+
+    /* DAUER BUTTONS */
+    .dauer-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .dauer-btn {
+      padding:9px 8px; border-radius:var(--r-md); font-size:12px; font-weight:500;
+      border:1.5px solid var(--green-200); background:#fafcf7; color:var(--gray-600);
+      cursor:pointer; font-family:'DM Sans',sans-serif; text-align:center;
+      transition:all var(--tr); user-select:none;
+    }
+    .dauer-btn.selected { background:var(--green-700); color:#fff; border-color:var(--green-700); }
+
+    /* CHECKBOX */
+    .check-item { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; }
+    .check-item:last-child { margin-bottom:0; }
+    .check-item input[type=checkbox] { width:16px; height:16px; margin-top:2px; accent-color:var(--green-600); flex-shrink:0; cursor:pointer; }
+    .check-item label { font-size:13px; color:var(--gray-600); cursor:pointer; line-height:1.5; }
+    .check-item label strong { color:var(--gray-800); }
+
+    /* HINWEIS BOXEN */
+    .info-box { border-radius:var(--r-md); padding:11px 14px; display:flex; gap:9px; align-items:flex-start; margin-bottom:1rem; }
+    .info-box.gelb { background:#FEF3C7; border:1px solid #FDE68A; }
+    .info-box.gelb i { color:#D97706; }
+    .info-box.gelb p { color:#92400E; }
+    .info-box.blau { background:var(--blue-100); border:1px solid #BFDBFE; }
+    .info-box.blau i { color:var(--blue-600); }
+    .info-box.blau p { color:var(--blue-800); }
+    .info-box.rot { background:var(--red-100); border:1px solid #FECACA; }
+    .info-box.rot i { color:var(--red-600); }
+    .info-box.rot p { color:var(--red-800); }
+    .info-box i { font-size:15px; flex-shrink:0; margin-top:1px; }
+    .info-box p { font-size:12px; line-height:1.6; }
+    .info-box strong { display:block; margin-bottom:2px; }
+
+    /* ÄNDERUNGS-CHECKBOX */
+    .aenderung-box {
+      background:#FFF7ED; border:1px solid #FED7AA; border-radius:var(--r-lg);
+      padding:1rem 1.2rem; margin-top:1rem;
+    }
+    .aenderung-titel { font-size:13px; font-weight:500; color:#9A3412; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+
+    /* FÜR-JEMANDEN */
+    .fuer-box { background:var(--blue-100); border:1px solid #BFDBFE; border-radius:var(--r-lg); padding:1rem 1.2rem; margin-top:10px; display:none; }
+    .fuer-box.open { display:block; }
+
+    /* ABBRECHEN GRÜNDE */
+    .grund-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .grund-btn {
+      padding:10px 12px; border-radius:var(--r-md); font-size:12px; font-weight:500;
+      border:1.5px solid var(--gray-200); background:var(--bg); color:var(--gray-600);
+      cursor:pointer; font-family:'DM Sans',sans-serif; text-align:left;
+      transition:all var(--tr); display:flex; align-items:center; gap:7px; user-select:none;
+    }
+    .grund-btn.selected { background:var(--red-100); border-color:var(--red-600); color:var(--red-800); }
+    .grund-btn i { font-size:14px; flex-shrink:0; }
+
+    /* KUNDENNUMMER */
+    .kunden-nr-display {
+      background:var(--amber-100); border:1px solid var(--amber-200); border-radius:var(--r-md);
+      padding:10px 14px; display:flex; align-items:center; gap:10px;
+    }
+    .kunden-nr-display i { font-size:18px; color:var(--amber-600); flex-shrink:0; }
+    .kunden-nr-label { font-size:11px; color:var(--amber-700); font-weight:500; margin-bottom:2px; }
+    .kunden-nr-wert { font-size:16px; font-weight:700; color:var(--amber-800); font-family:'Courier New',monospace; letter-spacing:2px; }
+
+    /* BUTTONS */
+    .btn-weiter {
+      width:100%; padding:13px; border-radius:var(--r-lg); background:var(--green-700); color:#fff; border:none;
+      font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+      transition:all var(--tr); margin-top:.5rem;
+    }
+    .btn-weiter:hover { background:var(--green-800); transform:translateY(-1px); }
+    .btn-weiter:disabled { background:var(--gray-200); cursor:not-allowed; transform:none; }
+    .btn-zurueck {
+      padding:12px 22px; border-radius:var(--r-lg); background:transparent; color:var(--gray-600);
+      border:1px solid var(--gray-200); font-family:'DM Sans',sans-serif; font-size:14px;
+      cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all var(--tr);
+    }
+    .btn-zurueck:hover { background:var(--gray-100); }
+    .btn-abbrechen {
+      width:100%; padding:13px; border-radius:var(--r-lg); background:var(--red-100); color:var(--red-800); border:1px solid #FECACA;
+      font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+      transition:all var(--tr);
+    }
+    .btn-abbrechen:hover { background:#FECACA; }
+
+    /* SUCCESS */
+    .success-box { text-align:center; padding:2rem; }
+    .success-icon { width:72px; height:72px; border-radius:50%; background:var(--green-100); border:2px solid var(--green-200); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--green-600); margin:0 auto 1.5rem; }
+    .success-box h2 { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:var(--green-800); margin-bottom:.8rem; }
+    .success-box p { font-size:14px; color:var(--gray-600); line-height:1.7; margin-bottom:1.5rem; }
+
+    /* MODAL */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:600; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:var(--r-xl); padding:1.75rem; width:100%; max-width:460px; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; }
+    .modal-header h3 { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--red-800); }
+    .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--gray-600); padding:4px; border-radius:6px; }
+    .modal-footer { display:flex; gap:10px; margin-top:1.3rem; }
+    .m-confirm { flex:1; padding:11px; border-radius:var(--r-lg); background:var(--red-600); color:#fff; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all var(--tr); }
+    .m-confirm:hover { background:var(--red-800); }
+    .m-cancel { padding:11px 18px; border-radius:var(--r-lg); background:transparent; color:var(--gray-600); border:1px solid var(--gray-200); font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; }
+
+    /* TOAST */
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:999; background:var(--green-800); color:#fff; padding:11px 18px; border-radius:var(--r-lg); font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px; transform:translateY(80px); opacity:0; transition:all 0.3s ease; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .spinner-wrap { min-height:50vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+    .spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--green-200); border-top-color:var(--green-700); animation:spin 0.8s linear infinite; }
+
+    footer { background:var(--green-900); color:var(--green-200); padding:1.5rem; text-align:center; margin-top:2rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--green-100); }
+    .footer-logo em { color:var(--amber-200); font-style:normal; }
+    footer p { font-size:12px; opacity:0.6; margin-top:4px; }
+
+    @media(max-width:560px) { .fg-row { grid-template-columns:1fr; } .dauer-grid { grid-template-columns:1fr 1fr; } .grund-grid { grid-template-columns:1fr; } .page-wrap { padding:1.5rem 1rem 3rem; } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Grün<em>&</em>Garten</a>
+  <a href="javascript:history.back()" class="nbtn"><i class="ti ti-arrow-left"></i> Zurück</a>
+</nav>
+
+<div id="spinnerWrap" class="spinner-wrap">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--gray-600)">Wird geladen...</p>
+</div>
+
+<div id="mainWrap" style="display:none">
+<div class="page-wrap">
+
+  <!-- GÄRTNER INFO -->
+  <div class="gaertner-card" id="gaertnerCard" style="display:none">
+    <div class="gc-avatar" id="gcAvatar"><i class="ti ti-user"></i></div>
+    <div class="gc-info">
+      <div class="gc-name" id="gcName">–</div>
+      <div class="gc-nr" id="gcNr">–</div>
+      <div class="gc-tags" id="gcTags"></div>
+    </div>
+  </div>
+
+  <!-- FORTSCHRITT -->
+  <div class="progress-bar" id="progressBar">
+    <div class="prog-step"><div class="prog-dot active" id="dot1">1</div><div class="prog-label active">Termin</div></div>
+    <div class="prog-line" id="line1"></div>
+    <div class="prog-step"><div class="prog-dot" id="dot2">2</div><div class="prog-label" id="lbl2">Auftrag</div></div>
+    <div class="prog-line" id="line2"></div>
+    <div class="prog-step"><div class="prog-dot" id="dot3">3</div><div class="prog-label" id="lbl3">Bestätigung</div></div>
+  </div>
+
+  <div id="msgBox"></div>
+
+  <!-- ── SCHRITT 1: TERMIN ── -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-check"></i> Termin wählen</div>
+
+      <div class="info-box blau" style="margin-bottom:1.2rem">
+        <i class="ti ti-info-circle"></i>
+        <p>Du kannst nur Wochentage wählen, an denen der Gärtner verfügbar ist. <strong>Hervorgehobene Tage = verfügbar.</strong></p>
+      </div>
+
+      <div class="fg">
+        <label>Verfügbare Wochentage <span class="req">*</span></label>
+        <div class="tage-grid" id="tageGrid">
+          <span style="font-size:13px;color:var(--gray-600)">Wird geladen...</span>
+        </div>
+        <p class="hint" id="tageHint"></p>
+      </div>
+
+      <div class="fg-row">
+        <div class="fg">
+          <label>Datum <span class="req">*</span></label>
+          <input type="date" id="terminDatum" min="" onchange="prüfeWochentag()" />
+          <p class="hint" id="datumHint"></p>
+        </div>
+        <div class="fg">
+          <label>Uhrzeit <span class="req">*</span></label>
+          <input type="time" id="terminUhrzeit" value="09:00" />
+          <p class="hint">Gewünschte Startzeit</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock"></i> Geschätzte Dauer</div>
+      <div class="dauer-grid" id="dauerGrid">
+        <div class="dauer-btn" onclick="setDauer(this,'unter 1 Std.')">unter 1 Std.</div>
+        <div class="dauer-btn" onclick="setDauer(this,'1–2 Std.')">1–2 Std.</div>
+        <div class="dauer-btn" onclick="setDauer(this,'2–4 Std.')">2–4 Std.</div>
+        <div class="dauer-btn" onclick="setDauer(this,'Halber Tag')">Halber Tag</div>
+        <div class="dauer-btn" onclick="setDauer(this,'Ganzer Tag')">Ganzer Tag</div>
+        <div class="dauer-btn" onclick="setDauer(this,'Mehrere Tage')">Mehrere Tage</div>
+      </div>
+    </div>
+
+    <button class="btn-weiter" onclick="goStep(2)"><i class="ti ti-arrow-right"></i> Weiter zu Auftragsdetails</button>
+  </div>
+
+  <!-- ── SCHRITT 2: AUFTRAG ── -->
+  <div id="step2" style="display:none">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-id-badge"></i> Deine Kundennummer</div>
+      <div class="kunden-nr-display">
+        <i class="ti ti-id-badge"></i>
+        <div>
+          <div class="kunden-nr-label">Kundennummer (für den Gärtner)</div>
+          <div class="kunden-nr-wert" id="kundenNrDisplay">–</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-600);margin-top:8px;line-height:1.5">Der Gärtner braucht diese Nummer um dich bei Ankunft zu identifizieren.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clipboard-text"></i> Auftragsdetails</div>
+
+      <div class="fg">
+        <label>Was soll gemacht werden? <span class="req">*</span></label>
+        <input type="text" id="auftragTitel" placeholder="z.B. Rasen mähen – großer Garten" maxlength="80"/>
+      </div>
+      <div class="fg">
+        <label>Genauere Beschreibung (optional)</label>
+        <textarea id="auftragBeschreibung" rows="3" placeholder="Details zum Auftrag..."></textarea>
+        <p class="hint">Keine Telefonnummern oder E-Mails!</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-home"></i> Adresse des Auftrags</div>
+
+      <!-- Für jemanden anderen -->
+      <div class="check-item" style="margin-bottom:12px">
+        <input type="checkbox" id="fuerJemandenCheck" onchange="toggleFuerJemanden()"/>
+        <label for="fuerJemandenCheck"><strong>Auftrag für jemand anderen</strong> (Freund, Familie...)</label>
+      </div>
+      <div class="fuer-box" id="fuerBox">
+        <div class="fg" style="margin-bottom:8px">
+          <label>Für wen?</label>
+          <input type="text" id="fuerWen" placeholder="z.B. Meine Mutter / Max Mustermann"/>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>Adresse der Person</label>
+          <input type="text" id="fuerAdresse" placeholder="Straße, PLZ, Ort"/>
+          <p class="hint">🔒 Erst nach Auftragsannahme für Gärtner sichtbar</p>
+        </div>
+      </div>
+
+      <div class="fg" style="margin-top:10px">
+        <label>Stadtteil / Ort <span class="req">*</span></label>
+        <input type="text" id="auftragStadtteil" placeholder="z.B. Hannover-Linden"/>
+        <p class="hint">Nur der Stadtteil wird angezeigt</p>
+      </div>
+      <div class="fg">
+        <label>Straße & Hausnummer (privat)</label>
+        <input type="text" id="auftragStrasse" placeholder="z.B. Gartenweg 12"/>
+        <p class="hint">🔒 Erst nach Auftragsannahme für Gärtner sichtbar</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-coin"></i> Kosten & Budget</div>
+
+      <div class="info-box gelb" style="margin-bottom:1rem">
+        <i class="ti ti-alert-triangle"></i>
+        <p><strong>Wichtiger Hinweis:</strong> Der hier angegebene Betrag ist dein Wunschpreis. Wenn sich der Aufwand vor Ort ändert (z.B. größere Fläche als erwartet), wird eine neue Absprache mit dem Gärtner nötig. Der Auftrag kann dann angepasst oder neu erstellt werden.</p>
+      </div>
+
+      <div class="kosten-wrap">
+        <div class="kosten-row">
+          <span>Geschätzte Dauer</span>
+          <span id="kostenDauer" style="color:var(--green-700);font-weight:500">–</span>
+        </div>
+        <div class="kosten-row">
+          <span>Dein Wunschpreis (€)</span>
+          <input type="number" class="kosten-input" id="wunschpreis" min="0" placeholder="0" oninput="updateKosten()"/>
+        </div>
+        <div class="kosten-row">
+          <span>Plattform-Provision (10%)</span>
+          <span id="provision" style="color:var(--gray-600)">–</span>
+        </div>
+        <div class="kosten-row">
+          <span>Gesamt</span>
+          <span id="gesamt">–</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Änderungs-Checkbox -->
+    <div class="aenderung-box">
+      <div class="aenderung-titel"><i class="ti ti-refresh-alert"></i> Auftragsänderung möglich</div>
+      <div class="check-item">
+        <input type="checkbox" id="aenderungMoeglich" checked/>
+        <label for="aenderungMoeglich"><strong>Ich bin einverstanden</strong>, dass bei Änderungen vor Ort eine neue Absprache mit dem Gärtner geführt wird und der Auftrag ggf. neu erstellt werden muss.</label>
+      </div>
+      <p style="font-size:11px;color:#9A3412;margin-top:8px;line-height:1.5">
+        <i class="ti ti-info-circle" style="font-size:12px"></i>
+        Beispiel: Rasen mähen für 20€ – der Gärtner stellt fest, dass die Fläche größer ist. Der Auftrag wird als "geändert" markiert, du erhältst eine Benachrichtigung und kannst einen neuen Auftrag mit angepasstem Preis erstellen.
+      </p>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn-zurueck" onclick="goStep(1)"><i class="ti ti-arrow-left"></i> Zurück</button>
+      <button class="btn-weiter" onclick="goStep(3)" style="flex:1"><i class="ti ti-arrow-right"></i> Weiter zur Bestätigung</button>
+    </div>
+  </div>
+
+  <!-- ── SCHRITT 3: BESTÄTIGUNG ── -->
+  <div id="step3" style="display:none">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clipboard-check"></i> Auftragsübersicht</div>
+      <div id="zusammenfassung" style="font-size:13px;color:var(--gray-600);line-height:1.9"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-shield-check"></i> Zustimmung</div>
+      <div class="check-item">
+        <input type="checkbox" id="agbCheck" required/>
+        <label for="agbCheck">Ich stimme den <a href="#" style="color:var(--green-700)">AGB</a> und der <a href="#" style="color:var(--green-700)">Datenschutzerklärung</a> zu. <span class="req">*</span></label>
+      </div>
+      <div class="check-item" style="margin-top:8px">
+        <input type="checkbox" id="datenschutzCheck" required/>
+        <label for="datenschutzCheck">Ich verstehe, dass bei Änderungen vor Ort eine neue Absprache nötig wird. <span class="req">*</span></label>
+      </div>
+      <div class="check-item" style="margin-top:8px">
+        <input type="checkbox" id="kontaktCheck" required/>
+        <label for="kontaktCheck">Ich werde keine privaten Kontaktdaten (Telefon/E-Mail) an den Gärtner weitergeben. <span class="req">*</span></label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn-zurueck" onclick="goStep(2)"><i class="ti ti-arrow-left"></i> Zurück</button>
+      <button class="btn-weiter" id="submitBtn" onclick="auftragAbschicken()" style="flex:1"><i class="ti ti-send"></i> Auftrag verbindlich senden</button>
+    </div>
+  </div>
+
+  <!-- ── SCHRITT 4: ERFOLG ── -->
+  <div id="step4" style="display:none">
+    <div class="card success-box">
+      <div class="success-icon"><i class="ti ti-circle-check"></i></div>
+      <h2>Auftrag gesendet!</h2>
+      <p>Dein Auftrag wurde erfolgreich an den Gärtner gesendet. Du erhältst eine Benachrichtigung sobald er antwortet.</p>
+      <div class="kunden-nr-display" style="display:inline-flex;margin-bottom:1.5rem">
+        <i class="ti ti-id-badge"></i>
+        <div>
+          <div class="kunden-nr-label">Auftragsnummer</div>
+          <div class="kunden-nr-wert" id="auftragNrDisplay">–</div>
+        </div>
+      </div>
+      <br/>
+      <a href="kunden-dashboard.html" class="btn-weiter" style="text-decoration:none;display:inline-flex;margin-top:.5rem"><i class="ti ti-home"></i> Zu meinem Bereich</a>
+    </div>
+  </div>
+
+  <!-- ── AUFTRAG STORNIEREN (falls bereits existiert) ── -->
+  <div id="stornoSection" style="display:none;margin-top:2rem">
+    <div class="card">
+      <div class="card-title" style="color:var(--red-800)"><i class="ti ti-ban" style="color:var(--red-600)"></i> Auftrag stornieren</div>
+      <p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem;line-height:1.6">Du kannst deinen Auftrag zurückziehen. Bitte gib einen Grund an – der Gärtner wird benachrichtigt.</p>
+      <div class="grund-grid" id="stornoGrundGrid">
+        <div class="grund-btn" onclick="selectGrund(this,'kein-bedarf')"><i class="ti ti-x"></i> Kein Bedarf mehr</div>
+        <div class="grund-btn" onclick="selectGrund(this,'datum-aendern')"><i class="ti ti-calendar-x"></i> Datum passt nicht</div>
+        <div class="grund-btn" onclick="selectGrund(this,'preis-aendern')"><i class="ti ti-coin-off"></i> Preis zu hoch</div>
+        <div class="grund-btn" onclick="selectGrund(this,'gaertner-aendern')"><i class="ti ti-user-x"></i> Anderen Gärtner gewählt</div>
+        <div class="grund-btn" onclick="selectGrund(this,'fehler')"><i class="ti ti-alert-triangle"></i> Versehentlich erstellt</div>
+        <div class="grund-btn" onclick="selectGrund(this,'sonstiges')"><i class="ti ti-dots"></i> Sonstiges</div>
+      </div>
+      <button class="btn-abbrechen" id="stornoBtn" onclick="auftragStornieren()" style="margin-top:1rem" disabled>
+        <i class="ti ti-ban"></i> Auftrag zurückziehen
+      </button>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+</div><!-- /mainWrap -->
+
+<!-- ABLEHNEN MODAL (für Gärtner) -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitel">Auftrag ablehnen</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastText"></span></div>
+
+<footer>
+  <div class="footer-logo">Grün<em>&</em>Garten</div>
+  <p>Deine Gärtner-Vermittlung · Hannover</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zmryzkmumypvxpidpxcz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptcnl6a211bXlwdnhwaWRweGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDEwNDQsImV4cCI6MjA3NTkxNzA0NH0.bTvCv1x7TZMT0_XuJbHnWxGUizROrGmecF_EnASMX4s';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const urlParams = new URLSearchParams(window.location.search);
+const gaertnerId = urlParams.get('gaertner');
+const angebotId  = urlParams.get('angebot');
+const vorhandenerAuftragId = urlParams.get('auftrag'); // zum Stornieren
+
+let user = null, kundeProfil = null, gaertnerProfil = null, gaertnerGaertnerProfil = null;
+let gewählterWochentag = null, gewählteDauer = null, gewählterStornoGrund = null;
+const WOCHENTAGE_MAP = { mo:'Mo', di:'Di', mi:'Mi', do:'Do', fr:'Fr', sa:'Sa', so:'So', flexible:'Flexibel', wochenendeGern:'WE bevorzugt' };
+const ALLE_WOCHENTAGE = ['mo','di','mi','do','fr','sa','so'];
+
+async function init() {
+  const {data:{session}} = await sb.auth.getSession();
+  user = session?.user;
+  if (!user) { window.location.href = 'anmelden.html'; return; }
+
+  // Kunden-Profil laden
+  const {data:kp} = await sb.from('profile').select('*').eq('id',user.id).single();
+  kundeProfil = kp || {};
+  document.getElementById('kundenNrDisplay').textContent = kundeProfil.kunden_nr || '–';
+
+  // Felder aus Profil vorausfüllen
+  if (kundeProfil.stadtteil) document.getElementById('auftragStadtteil').value = kundeProfil.stadtteil;
+
+  // Min-Datum = heute
+  const heute = new Date().toISOString().split('T')[0];
+  document.getElementById('terminDatum').min = heute;
+
+  // Gärtner laden wenn vorhanden
+  if (gaertnerId) {
+    const {data:gp} = await sb.from('profile').select('*').eq('id',gaertnerId).single();
+    const {data:gpd} = await sb.from('gaertner_profil').select('*').eq('user_id',gaertnerId).single();
+    gaertnerProfil = gp || null;
+    gaertnerGaertnerProfil = gpd || null;
+
+    if (gaertnerProfil) {
+      const card = document.getElementById('gaertnerCard');
+      card.style.display = 'flex';
+      document.getElementById('gcName').textContent = gaertnerProfil.anzeigename || gaertnerProfil.vorname || 'Gärtner';
+      document.getElementById('gcNr').textContent = gaertnerProfil.gaertner_nr || '';
+      if (gaertnerProfil.avatar_url) {
+        const img = document.createElement('img');
+        img.src = gaertnerProfil.avatar_url; img.alt = '';
+        img.onload = () => img.style.display = 'block';
+        document.getElementById('gcAvatar').innerHTML = '';
+        document.getElementById('gcAvatar').appendChild(img);
+      }
+      // Tätigkeiten als Tags
+      const taetigkeiten = gaertnerGaertnerProfil?.taetigkeiten || [];
+      const tagsEl = document.getElementById('gcTags');
+      taetigkeiten.slice(0,4).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'gc-tag'; span.textContent = t;
+        tagsEl.appendChild(span);
+      });
+
+      // Verfügbare Tage aufbauen
+      baueTagGrid(gaertnerGaertnerProfil?.verfuegbarkeit || []);
+    }
+  } else {
+    // Kein Gärtner – alle Tage verfügbar
+    baueTagGrid(ALLE_WOCHENTAGE);
+  }
+
+  // Storno-Modus wenn vorhandener Auftrag
+  if (vorhandenerAuftragId) {
+    document.getElementById('stornoSection').style.display = 'block';
+  }
+
+  document.getElementById('spinnerWrap').style.display = 'none';
+  document.getElementById('mainWrap').style.display = 'block';
+}
+
+// ── TAGE GRID ──
+function baueTagGrid(verfuegbarkeit) {
+  const grid = document.getElementById('tageGrid');
+  grid.innerHTML = '';
+  const hatFlexibel = verfuegbarkeit.includes('flexible');
+  const verfuegbareTage = verfuegbarkeit.filter(v => ALLE_WOCHENTAGE.includes(v));
+
+  ALLE_WOCHENTAGE.forEach(key => {
+    const ist_verfuegbar = hatFlexibel || verfuegbareTage.includes(key);
+    const btn = document.createElement('div');
+    btn.className = 'tag-btn' + (ist_verfuegbar ? ' available' : ' unavailable');
+    btn.textContent = WOCHENTAGE_MAP[key];
+    btn.dataset.tag = key;
+    if (ist_verfuegbar) {
+      btn.onclick = () => selectWochentag(btn, key);
+    }
+    grid.appendChild(btn);
+  });
+
+  const hint = document.getElementById('tageHint');
+  if (verfuegbareTage.length === 0 && !hatFlexibel) {
+    hint.textContent = 'Der Gärtner hat noch keine Verfügbarkeit angegeben – alle Tage auswählbar.';
+    // Alle aktivieren
+    grid.querySelectorAll('.tag-btn').forEach(b => {
+      b.classList.remove('unavailable'); b.classList.add('available');
+      b.onclick = () => selectWochentag(b, b.dataset.tag);
+    });
+  } else if (hatFlexibel) {
+    hint.textContent = 'Dieser Gärtner ist flexibel verfügbar.';
+  } else {
+    const namen = verfuegbareTage.map(k => WOCHENTAGE_MAP[k]).join(', ');
+    hint.textContent = `Verfügbar: ${namen}`;
+  }
+}
+
+function selectWochentag(btn, tag) {
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  gewählterWochentag = tag;
+  // Datum-Feld: nächsten passenden Tag vorschlagen
+  const heute = new Date();
+  const tagIndex = ['so','mo','di','mi','do','fr','sa'].indexOf(tag);
+  let diff = (tagIndex - heute.getDay() + 7) % 7;
+  if (diff === 0) diff = 7; // nächste Woche wenn heute
+  const vorschlag = new Date(heute);
+  vorschlag.setDate(heute.getDate() + diff);
+  document.getElementById('terminDatum').value = vorschlag.toISOString().split('T')[0];
+  document.getElementById('datumHint').textContent = '';
+}
+
+function prüfeWochentag() {
+  const datum = document.getElementById('terminDatum').value;
+  if (!datum) return;
+  const d = new Date(datum);
+  const tagKeys = ['so','mo','di','mi','do','fr','sa'];
+  const gewählt = tagKeys[d.getDay()];
+  const btn = document.querySelector(`.tag-btn[data-tag="${gewählt}"]`);
+  if (btn && btn.classList.contains('unavailable')) {
+    document.getElementById('datumHint').textContent = `⚠️ ${WOCHENTAGE_MAP[gewählt]} ist für diesen Gärtner nicht verfügbar. Bitte anderen Tag wählen.`;
+    document.getElementById('datumHint').style.color = 'var(--red-600)';
+  } else {
+    document.getElementById('datumHint').textContent = '';
+    // Tag-Button synchron markieren
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
+    if (btn) { btn.classList.add('selected'); gewählterWochentag = gewählt; }
+  }
+}
+
+// ── DAUER ──
+function setDauer(btn, val) {
+  document.querySelectorAll('.dauer-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  gewählteDauer = val;
+  document.getElementById('kostenDauer').textContent = val;
+  updateKosten();
+}
+
+// ── KOSTEN ──
+function updateKosten() {
+  const preis = parseFloat(document.getElementById('wunschpreis').value) || 0;
+  const provision = preis * 0.1;
+  const gesamt = preis + provision;
+  document.getElementById('provision').textContent = provision > 0 ? provision.toFixed(2) + ' €' : '–';
+  document.getElementById('gesamt').textContent = gesamt > 0 ? gesamt.toFixed(2) + ' €' : '–';
+}
+
+// ── FÜR JEMANDEN ──
+function toggleFuerJemanden() {
+  const box = document.getElementById('fuerBox');
+  box.classList.toggle('open', document.getElementById('fuerJemandenCheck').checked);
+}
+
+// ── STORNO GRUND ──
+function selectGrund(btn, grund) {
+  document.querySelectorAll('.grund-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  gewählterStornoGrund = grund;
+  document.getElementById('stornoBtn').disabled = false;
+}
+
+// ── SCHRITT NAVIGATION ──
+function goStep(n) {
+  // Validierung
+  if (n === 2) {
+    const datum = document.getElementById('terminDatum').value;
+    if (!datum) { showMsg('❌ Bitte ein Datum wählen!', 'rot'); return; }
+    if (!gewählteDauer) { showMsg('❌ Bitte eine Dauer wählen!', 'rot'); return; }
+    // Wochentag-Check
+    const d = new Date(datum);
+    const tagKeys = ['so','mo','di','mi','do','fr','sa'];
+    const tagDesDatums = tagKeys[d.getDay()];
+    const tagBtn = document.querySelector(`.tag-btn[data-tag="${tagDesDatums}"]`);
+    if (tagBtn && tagBtn.classList.contains('unavailable')) {
+      showMsg('❌ Dieses Datum liegt auf einem Tag, der für den Gärtner nicht verfügbar ist!', 'rot'); return;
+    }
+  }
+  if (n === 3) {
+    if (!document.getElementById('auftragTitel').value.trim()) { showMsg('❌ Bitte einen Auftragstitel eingeben!', 'rot'); return; }
+    if (!document.getElementById('auftragStadtteil').value.trim()) { showMsg('❌ Bitte Stadtteil/Ort angeben!', 'rot'); return; }
+    // Zusammenfassung aufbauen
+    baueSummary();
+  }
+  [1,2,3,4].forEach(s => document.getElementById('step'+s).style.display = s===n ? 'block' : 'none');
+  [1,2,3].forEach(s => {
+    const dot = document.getElementById('dot'+s), lbl = document.getElementById('lbl'+s);
+    dot.className = 'prog-dot' + (s===n ? ' active' : s<n ? ' done' : '');
+    if (s===n) { dot.innerHTML = s; if(lbl) lbl.className='prog-label active'; }
+    else if (s<n) { dot.innerHTML = '<i class="ti ti-check" style="font-size:13px"></i>'; if(lbl) lbl.className='prog-label'; }
+    else { dot.innerHTML = s; if(lbl) lbl.className='prog-label'; }
+  });
+  [1,2].forEach(l => { const line = document.getElementById('line'+l); if(line) line.className = 'prog-line' + (l<n ? ' done' : ''); });
+  document.getElementById('msgBox').innerHTML = '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function baueSummary() {
+  const datum = document.getElementById('terminDatum').value;
+  const uhrzeit = document.getElementById('terminUhrzeit').value;
+  const datumFormatiert = datum ? new Date(datum).toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '–';
+  const fuerJemanden = document.getElementById('fuerJemandenCheck').checked;
+  const fuerWen = document.getElementById('fuerWen').value.trim();
+  const preis = document.getElementById('wunschpreis').value;
+  const gesamt = preis ? (parseFloat(preis) * 1.1).toFixed(2) : '–';
+  const gaertnerName = gaertnerProfil ? (gaertnerProfil.anzeigename || gaertnerProfil.vorname || 'Gärtner') : 'Nicht ausgewählt';
+
+  document.getElementById('zusammenfassung').innerHTML = `
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:baseline">
+      <span style="color:var(--gray-600)">Gärtner:</span><span style="color:var(--gray-800);font-weight:500">${gaertnerName} ${gaertnerProfil?.gaertner_nr ? `<span style="font-family:'Courier New',monospace;font-size:11px">(${gaertnerProfil.gaertner_nr})</span>` : ''}</span>
+      <span style="color:var(--gray-600)">Auftrag:</span><span style="font-weight:500">${document.getElementById('auftragTitel').value}</span>
+      <span style="color:var(--gray-600)">Termin:</span><span>${datumFormatiert} um ${uhrzeit} Uhr</span>
+      <span style="color:var(--gray-600)">Dauer:</span><span>${gewählteDauer || '–'}</span>
+      <span style="color:var(--gray-600)">Stadtteil:</span><span>${document.getElementById('auftragStadtteil').value}</span>
+      <span style="color:var(--gray-600)">Wunschpreis:</span><span>${preis ? preis + ' €' : 'Nicht angegeben'}</span>
+      <span style="color:var(--gray-600)">Gesamt:</span><span style="font-weight:500;color:var(--green-800)">${gesamt !== '–' ? gesamt + ' €' : '–'}</span>
+      ${fuerJemanden ? `<span style="color:var(--gray-600)">Für:</span><span style="background:var(--blue-100);color:var(--blue-800);padding:2px 8px;border-radius:8px">${fuerWen || 'Jemand anderen'}</span>` : ''}
+      <span style="color:var(--gray-600)">Kundennummer:</span><span style="font-family:'Courier New',monospace;font-weight:700">${kundeProfil.kunden_nr || '–'}</span>
+    </div>`;
+}
+
+// ── AUFTRAG ABSENDEN ──
+async function auftragAbschicken() {
+  if (!document.getElementById('agbCheck').checked) { showMsg('❌ Bitte allen Bedingungen zustimmen!', 'rot'); return; }
+  if (!document.getElementById('datenschutzCheck').checked) { showMsg('❌ Bitte allen Bedingungen zustimmen!', 'rot'); return; }
+  if (!document.getElementById('kontaktCheck').checked) { showMsg('❌ Bitte allen Bedingungen zustimmen!', 'rot'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Wird gesendet...';
+
+  const datum = document.getElementById('terminDatum').value;
+  const uhrzeit = document.getElementById('terminUhrzeit').value;
+  const fuerJemanden = document.getElementById('fuerJemandenCheck').checked;
+  const preis = document.getElementById('wunschpreis').value;
+
+  const {data,error} = await sb.from('kunden_auftraege').insert({
+    kunden_id: user.id,
+    gaertner_id: gaertnerId || null,
+    angebot_id: angebotId || null,
+    titel: document.getElementById('auftragTitel').value.trim(),
+    beschreibung: document.getElementById('auftragBeschreibung').value.trim() || null,
+    termin_datum: datum,
+    termin_uhrzeit: uhrzeit,
+    wochentage: gewählterWochentag ? [gewählterWochentag] : [],
+    dauer: gewählteDauer,
+    preis: preis || null,
+    stadtteil: document.getElementById('auftragStadtteil').value.trim(),
+    strasse_privat: document.getElementById('auftragStrasse').value.trim() || null,
+    fuer_wen: fuerJemanden ? document.getElementById('fuerWen').value.trim() : null,
+    fuer_adresse: fuerJemanden ? document.getElementById('fuerAdresse').value.trim() : null,
+    aenderung_moeglich: document.getElementById('aenderungMoeglich').checked,
+    status: 'offen'
+  }).select().single();
+
+  if (error) {
+    showMsg('❌ Fehler: ' + error.message, 'rot');
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Auftrag verbindlich senden';
+    return;
+  }
+
+  document.getElementById('auftragNrDisplay').textContent = data.id.slice(0,8).toUpperCase();
+  [1,2,3].forEach(s => document.getElementById('step'+s).style.display='none');
+  document.getElementById('progressBar').style.display = 'none';
+  document.getElementById('step4').style.display = 'block';
+}
+
+// ── STORNIEREN ──
+async function auftragStornieren() {
+  if (!gewählterStornoGrund) { showToast('❌ Bitte Stornierungsgrund wählen!'); return; }
+  const stornoTexte = { 'kein-bedarf':'Kein Bedarf mehr','datum-aendern':'Datum passt nicht','preis-aendern':'Preis zu hoch','gaertner-aendern':'Anderen Gärtner gewählt','fehler':'Versehentlich erstellt','sonstiges':'Sonstiges' };
+  await sb.from('kunden_auftraege').update({
+    status: 'storniert',
+    storno_grund: stornoTexte[gewählterStornoGrund] || gewählterStornoGrund
+  }).eq('id', vorhandenerAuftragId);
+  showToast('Auftrag storniert');
+  setTimeout(() => window.location.href = 'kunden-dashboard.html', 1500);
+}
+
+// ── ABLEHNEN (Gärtner) - Modal ──
+function openAblehnenModal(auftragId) {
+  const GRUENDE = ['Kein Zeit','Zu weit entfernt','Nicht meine Tätigkeit','Bereits ausgebucht','Auftrag unklar','Wetterbedingungen'];
+  document.getElementById('modalTitel').textContent = 'Auftrag ablehnen';
+  document.getElementById('modalBody').innerHTML = `
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem">Bitte wähle einen Ablehnungsgrund:</p>
+    <div class="grund-grid" id="ablehnGrundGrid">
+      ${GRUENDE.map(g=>`<div class="grund-btn" onclick="selectAblehnGrund(this,'${g}')"><i class="ti ti-x"></i>${g}</div>`).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="m-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="m-confirm" id="ablehnBtn" onclick="auftragAblehnen('${auftragId}')" disabled><i class="ti ti-ban"></i> Ablehnen</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+let gewählterAblehnGrund = null;
+function selectAblehnGrund(btn, grund) {
+  document.querySelectorAll('#ablehnGrundGrid .grund-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected'); gewählterAblehnGrund = grund;
+  document.getElementById('ablehnBtn').disabled = false;
+}
+async function auftragAblehnen(auftragId) {
+  await sb.from('kunden_auftraege').update({ status:'abgelehnt', ablehn_grund: gewählterAblehnGrund }).eq('id',auftragId);
+  closeModal(); showToast('Auftrag abgelehnt');
+  setTimeout(()=>window.location.href='gaertner-profil.html', 1500);
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ── HILFSFUNKTIONEN ──
+function showMsg(text, typ) {
+  const box = document.getElementById('msgBox');
+  box.innerHTML = `<div class="info-box ${typ}" style="margin-bottom:1rem"><i class="ti ti-alert-circle"></i><p>${text}</p></div>`;
+}
+function showToast(t) {
+  const el=document.getElementById('toast'); document.getElementById('toastText').textContent=t;
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+init();
+</script>
+</body>
+</html>

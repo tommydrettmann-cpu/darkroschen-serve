@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gärtner Profil – Grün & Garten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p-bg:#f5f8f0; --p-card:#ffffff; --p-header:#27500A;
+      --p-accent:#BA7517; --p-text:#2C2C2A; --p-text2:#5F5E5A;
+      --p-border:#C0DD97; --p-btn-bg:#3B6D11; --p-btn-text:#ffffff;
+      --green-900:#173404; --green-800:#27500A; --green-700:#3B6D11;
+      --green-600:#639922; --green-200:#C0DD97; --green-100:#EAF3DE;
+      --amber-800:#633806; --amber-600:#BA7517; --amber-200:#FAC775; --amber-100:#FAEEDA;
+      --gray-800:#2C2C2A; --gray-600:#5F5E5A; --gray-200:#D3D1C7;
+      --white:#ffffff; --bg-page:#f5f8f0;
+      --r-md:10px; --r-lg:14px; --r-xl:20px; --tr:0.22s ease;
+    }
+    body { font-family:'DM Sans',sans-serif; color:var(--p-text); background:var(--p-bg); min-height:100vh; }
+
+    /* NAVBAR */
+    .navbar { position:sticky; top:0; z-index:300; background:rgba(255,255,255,0.93); backdrop-filter:blur(12px); border-bottom:1px solid var(--green-200); height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 2rem; }
+    .logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--green-800); text-decoration:none; }
+    .logo em { color:var(--amber-600); font-style:normal; }
+    .nav-right { display:flex; align-items:center; gap:8px; }
+    .nbtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--green-200); background:transparent; color:var(--green-800); transition:all var(--tr); text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .nbtn:hover { background:var(--green-100); }
+    .nbtn.primary { background:var(--green-700); color:#fff; border-color:var(--green-700); }
+
+    /* EDITOR TOOLBAR */
+    .editor-toolbar { background:var(--green-900); color:#fff; padding:10px 2rem; display:none; align-items:center; gap:10px; flex-wrap:wrap; position:sticky; top:64px; z-index:299; }
+    .editor-toolbar.visible { display:flex; }
+    .tb-btn { font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; transition:background var(--tr); }
+    .tb-btn:hover { background:rgba(255,255,255,0.2); }
+    .tb-btn.active { background:var(--green-700); border-color:var(--green-600); }
+    .tb-sep { width:1px; height:20px; background:rgba(255,255,255,0.2); }
+
+    /* STATUS BADGE */
+    .status-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 12px; border-radius:20px; font-weight:500; cursor:pointer; transition:all var(--tr); border:1px solid transparent; }
+    .status-badge.online { background:#DCFCE7; color:#166534; border-color:#A7F3D0; }
+    .status-badge.offline { background:var(--gray-200); color:var(--gray-600); border-color:var(--gray-200); }
+    .status-badge .dot { width:8px; height:8px; border-radius:50%; }
+    .status-badge.online .dot { background:#16A34A; }
+    .status-badge.offline .dot { background:var(--gray-600); }
+
+    /* PROFIL HEADER */
+    .profil-header { background:var(--p-header); padding:3rem 2rem 2rem; position:relative; overflow:hidden; }
+    .profil-header::before { content:''; position:absolute; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,0.07),transparent 70%); top:-150px; right:-80px; pointer-events:none; }
+    .ph-inner { max-width:900px; margin:0 auto; display:flex; align-items:flex-end; gap:2rem; flex-wrap:wrap; position:relative; z-index:1; }
+    .avatar { width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.15); border:4px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; font-size:36px; color:rgba(255,255,255,0.7); overflow:hidden; cursor:pointer; position:relative; flex-shrink:0; }
+    .avatar img { width:100%; height:100%; object-fit:cover; display:none; }
+    .avatar-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity var(--tr); color:#fff; font-size:20px; }
+    .avatar:hover .avatar-overlay { opacity:1; }
+    .ph-info { flex:1; min-width:200px; }
+    .ph-name { font-family:'Playfair Display',serif; font-size:clamp(1.5rem,4vw,2rem); font-weight:700; color:#fff; margin-bottom:3px; }
+    .ph-realname { font-size:13px; color:rgba(255,255,255,0.65); margin-bottom:8px; }
+    .ph-badges { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .ph-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; }
+    .ph-nr { font-family:'Courier New',monospace; font-weight:700; letter-spacing:1px; }
+    .ph-actions { margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+    /* BODY */
+    .profil-body { max-width:900px; margin:0 auto; padding:1.5rem 2rem 3rem; }
+    .blocks-container { display:grid; gap:16px; }
+    .layout-1 { grid-template-columns:1fr 1fr; }
+    .layout-2 { grid-template-columns:2fr 1fr; }
+    .layout-3 { grid-template-columns:1fr 2fr; }
+    .layout-4 { grid-template-columns:1fr; }
+
+    /* BLÖCKE */
+    .block { background:var(--p-card); border:1px solid var(--p-border); border-radius:var(--r-xl); padding:1.5rem; position:relative; transition:box-shadow var(--tr); }
+    .block.dragging { opacity:0.4; }
+    .block.drag-over { border:2px dashed var(--green-600); background:var(--green-100); }
+    .block.hidden-block { opacity:0.35; filter:grayscale(0.5); position:relative; }
+    .block.hidden-block::after { content:'Ausgeblendet'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--gray-600); background:rgba(255,255,255,0.6); border-radius:var(--r-xl); pointer-events:none; }
+    .block.hidden-block .drag-handle, .block.hidden-block .block-toggle-btn { pointer-events:all; z-index:10; position:relative; }
+    .drag-handle { position:absolute; top:10px; left:10px; width:24px; height:24px; border-radius:6px; background:var(--green-100); color:var(--green-600); display:none; align-items:center; justify-content:center; font-size:14px; cursor:grab; z-index:10; }
+    .edit-mode .drag-handle { display:flex; }
+    .edit-mode .block { cursor:default; padding-left:2.5rem; }
+
+    .block-title { font-size:13px; font-weight:500; color:var(--p-text); display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding-bottom:8px; border-bottom:1px solid var(--p-border); }
+    .bt-left { display:flex; align-items:center; gap:7px; }
+    .bt-left i { font-size:16px; color:var(--p-accent); }
+    .bt-right { display:flex; align-items:center; gap:6px; }
+    .block-edit-btn { font-size:11px; color:var(--p-accent); cursor:pointer; display:none; align-items:center; gap:3px; background:none; border:none; font-family:'DM Sans',sans-serif; padding:3px 8px; border-radius:6px; transition:background var(--tr); }
+    .edit-mode .block-edit-btn { display:flex; }
+    .block-toggle-btn { font-size:11px; color:var(--gray-600); cursor:pointer; display:none; align-items:center; gap:3px; background:none; border:1px solid var(--gray-200); font-family:'DM Sans',sans-serif; padding:3px 8px; border-radius:6px; transition:all var(--tr); }
+    .edit-mode .block-toggle-btn { display:flex; }
+    .block-toggle-btn.hidden { color:var(--gray-400,#9CA3AF); border-color:var(--gray-200); text-decoration:line-through; }
+
+    /* INHALTE */
+    .beschreibung-text { font-size:14px; color:var(--p-text2); line-height:1.75; }
+    .tags-wrap { display:flex; flex-wrap:wrap; gap:7px; }
+    .tag { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; font-size:12px; background:var(--p-bg); color:var(--p-text); border:1px solid var(--p-border); }
+    .tag i { font-size:13px; color:var(--p-accent); }
+    .tag.jahreszeit { font-weight:500; padding:6px 14px; }
+    .tag.fruehling { background:#ECFDF5; border-color:#A7F3D0; color:#065F46; }
+    .tag.fruehling i { color:#10B981; }
+    .tag.sommer { background:#FFFBEB; border-color:#FDE68A; color:#92400E; }
+    .tag.sommer i { color:#F59E0B; }
+    .tag.herbst { background:#FFF7ED; border-color:#FED7AA; color:#9A3412; }
+    .tag.herbst i { color:#EA580C; }
+    .tag.winter { background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF; }
+    .tag.winter i { color:#3B82F6; }
+
+    /* VERFÜGBARKEIT */
+    .verfueg-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .verfueg-tag { padding:6px 12px; border-radius:20px; font-size:12px; border:1px solid var(--p-border); background:var(--p-bg); color:var(--p-text2); display:flex; align-items:center; gap:5px; }
+    .verfueg-tag.aktiv { background:var(--p-btn-bg); color:var(--p-btn-text); border-color:var(--p-btn-bg); }
+
+    /* ERFAHRUNG */
+    .erfahrung-list { list-style:none; }
+    .erfahrung-list li { font-size:13px; color:var(--p-text2); padding:7px 0; border-bottom:1px solid var(--p-border); display:flex; align-items:flex-start; gap:8px; line-height:1.6; }
+    .erfahrung-list li:last-child { border-bottom:none; }
+    .erfahrung-list li i { font-size:15px; color:var(--p-accent); flex-shrink:0; margin-top:2px; }
+
+    /* WERKZEUG */
+    .werkzeug-liste { display:flex; flex-wrap:wrap; gap:7px; }
+    .werkzeug-tag { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; font-size:12px; background:#EFF6FF; color:#1E40AF; border:1px solid #BFDBFE; }
+    .werkzeug-tag i { font-size:13px; }
+
+    /* ANGEBOTE */
+    .auftraege-liste { display:flex; flex-direction:column; gap:10px; }
+    .auftrag-card { background:var(--p-bg); border:1px solid var(--p-border); border-radius:var(--r-lg); padding:1rem; cursor:pointer; transition:all var(--tr); }
+    .auftrag-card:hover { border-color:var(--p-accent); transform:translateY(-1px); }
+    .auftrag-card.angenommen { border-color:#16A34A; background:#DCFCE7; }
+    .ac-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:5px; }
+    .ac-name { font-size:14px; font-weight:500; color:var(--p-text); }
+    .ac-preis { font-size:13px; font-weight:500; color:var(--p-accent); white-space:nowrap; }
+    .ac-meta { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--p-text2); margin-bottom:8px; }
+    .ac-meta span { display:flex; align-items:center; gap:4px; }
+    .ac-status { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; }
+    .ac-status.offen { background:#DCFCE7; color:#166534; }
+    .ac-status.angenommen { background:#D1FAE5; color:#065F46; }
+    .anfragen-btn { width:100%; padding:10px; border-radius:var(--r-md); background:var(--p-btn-bg); color:var(--p-btn-text); border:none; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all var(--tr); margin-top:10px; }
+    .anfragen-btn:hover { opacity:0.88; transform:translateY(-1px); }
+
+    /* KUNDEN AUFTRÄGE */
+    .kunden-auftrag-item { background:var(--p-bg); border:1px solid var(--p-border); border-radius:var(--r-lg); padding:1rem; margin-bottom:10px; }
+    .ka-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
+    .ka-titel { font-size:13px; font-weight:500; color:var(--p-text); }
+    .ka-meta { font-size:12px; color:var(--p-text2); display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+    .ka-meta span { display:flex; align-items:center; gap:4px; }
+    .ka-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+    .ka-tag { font-size:11px; padding:2px 7px; border-radius:10px; background:var(--amber-100); color:var(--amber-800); border:1px solid var(--amber-200); }
+    .ka-btn { font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; transition:all var(--tr); background:var(--p-btn-bg); color:var(--p-btn-text); }
+    .ka-btn:hover { opacity:0.85; }
+
+    /* KONTAKT */
+    .kontakt-block { display:flex; flex-direction:column; gap:10px; }
+    .kontakt-btn { width:100%; padding:11px; border-radius:var(--r-lg); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:all var(--tr); border:none; }
+    .kontakt-btn.primary { background:var(--p-btn-bg); color:var(--p-btn-text); }
+    .kontakt-btn.primary:hover { opacity:0.88; transform:translateY(-1px); }
+    .kontakt-btn.secondary { background:var(--p-card); color:var(--p-text); border:1px solid var(--p-border); }
+    .kontakt-btn.secondary:hover { background:var(--p-bg); }
+    .sicher-hinweis { font-size:11px; color:var(--p-text2); text-align:center; line-height:1.5; }
+
+    .leer { font-size:13px; color:var(--p-text2); font-style:italic; padding:0.5rem 0; }
+
+    /* AKTIONS-BUTTONS */
+    .aktions-wrap { max-width:900px; margin:0 auto; padding:0 2rem 2rem; display:none; }
+    .aktions-wrap.visible { display:block; }
+    .aktions-inner { display:flex; gap:12px; flex-wrap:wrap; }
+    .aktions-btn { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; padding:12px 24px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s ease; border:2px solid transparent; }
+    .aktions-btn.form-rund { border-radius:50px; }
+    .aktions-btn.form-eckig { border-radius:4px; }
+    .aktions-btn.form-mittel { border-radius:12px; }
+    .aktions-btn.stil-outline { background:transparent !important; border-color:currentColor; }
+    .aktions-btn.stil-ghost { background:transparent !important; border-color:transparent; text-decoration:underline; }
+    .btn-anpass-panel { background:var(--p-card); border:1px solid var(--p-border); border-radius:var(--r-xl); padding:1.5rem; margin-bottom:16px; display:none; }
+    .edit-mode .btn-anpass-panel { display:block; }
+    .btn-anpass-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .bap-item { display:flex; flex-direction:column; gap:5px; }
+    .bap-item label { font-size:12px; font-weight:500; color:var(--p-text2); }
+    .bap-select { font-size:12px; padding:6px 10px; border-radius:8px; border:1px solid var(--p-border); background:var(--p-bg); font-family:'DM Sans',sans-serif; color:var(--p-text); cursor:pointer; }
+    .bap-color { height:36px; border-radius:8px; border:1px solid var(--p-border); cursor:pointer; padding:2px; width:100%; }
+
+    /* MODALS */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:600; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--white); border-radius:var(--r-xl); padding:1.75rem; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.4rem; }
+    .modal-header h3 { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700; color:var(--green-800); }
+    .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--gray-600); padding:4px; border-radius:6px; }
+    .fg { margin-bottom:1rem; }
+    .fg label { display:block; font-size:13px; font-weight:500; color:var(--green-800); margin-bottom:5px; }
+    .fg input, .fg textarea, .fg select { width:100%; padding:10px 13px; border-radius:var(--r-md); border:1px solid var(--green-200); background:var(--bg-page); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--gray-800); outline:none; appearance:none; transition:border-color var(--tr); }
+    .fg textarea { resize:vertical; min-height:75px; line-height:1.6; }
+    .fg input:focus, .fg textarea:focus, .fg select:focus { border-color:var(--green-600); box-shadow:0 0 0 3px rgba(99,153,34,0.12); }
+    .fg .hint { font-size:11px; color:var(--gray-600); margin-top:4px; }
+    .fg-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .modal-footer { display:flex; gap:10px; margin-top:1.4rem; }
+    .btn-save { flex:1; padding:11px; border-radius:var(--r-lg); background:var(--green-700); color:#fff; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all var(--tr); }
+    .btn-save:hover { background:var(--green-800); }
+    .btn-cancel { padding:11px 18px; border-radius:var(--r-lg); background:transparent; color:var(--gray-600); border:1px solid var(--gray-200); font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; }
+    .btn-cancel:hover { background:var(--bg-page); }
+    .modal-delete { padding:8px 14px; border-radius:var(--r-md); font-size:13px; background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:5px; }
+
+    /* MODAL SPEZIAL */
+    .js-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.2rem; }
+    .js-btn { padding:12px; border-radius:var(--r-lg); border:2px solid transparent; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; transition:all var(--tr); }
+    .js-btn.fruehling { background:#ECFDF5; color:#065F46; border-color:#A7F3D0; }
+    .js-btn.sommer { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
+    .js-btn.herbst { background:#FFF7ED; color:#9A3412; border-color:#FED7AA; }
+    .js-btn.winter { background:#EFF6FF; color:#1E40AF; border-color:#BFDBFE; }
+    .js-btn.selected { filter:brightness(0.88); box-shadow:0 0 0 3px rgba(59,109,17,0.15); }
+    .taetigkeit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+    .taetigkeit-tag { padding:8px 10px; border-radius:var(--r-md); border:1px solid var(--green-200); background:var(--bg-page); font-size:12px; color:var(--gray-800); cursor:pointer; display:flex; align-items:center; gap:5px; transition:all var(--tr); user-select:none; }
+    .taetigkeit-tag i { font-size:13px; color:var(--green-600); }
+    .taetigkeit-tag.selected { background:var(--green-100); border-color:var(--green-600); font-weight:500; }
+    .verfueg-sel-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .vs-btn { padding:8px 14px; border-radius:20px; font-size:13px; border:1px solid var(--green-200); background:var(--bg-page); color:var(--gray-800); cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:5px; transition:all var(--tr); user-select:none; }
+    .vs-btn.selected { background:var(--green-700); color:#fff; border-color:var(--green-700); }
+    .werkzeug-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+    .wz-tag { padding:8px 10px; border-radius:var(--r-md); border:1px solid #BFDBFE; background:#EFF6FF; font-size:12px; color:#1E40AF; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all var(--tr); user-select:none; }
+    .wz-tag.selected { background:#2563EB; color:#fff; border-color:#2563EB; }
+    .farben-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .farbe-item { display:flex; flex-direction:column; gap:5px; }
+    .farbe-item label { font-size:12px; font-weight:500; color:var(--gray-800); }
+    .farbe-item input[type="color"] { width:100%; height:40px; border-radius:var(--r-md); border:1px solid var(--green-200); cursor:pointer; padding:3px; background:var(--bg-page); }
+    .farben-vorlagen { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem; }
+    .fv { width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all var(--tr); }
+    .fv:hover { transform:scale(1.15); }
+    .fv.active { border-color:var(--green-800); }
+    .layout-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .layout-opt { border:2px solid var(--green-200); border-radius:var(--r-md); padding:10px 6px; cursor:pointer; text-align:center; transition:all var(--tr); background:var(--bg-page); }
+    .layout-opt.selected { border-color:var(--green-700); background:var(--green-100); }
+    .layout-opt .lp { display:flex; gap:3px; justify-content:center; margin-bottom:5px; }
+    .layout-opt .lp div { background:#a8d879; border-radius:2px; height:28px; }
+    .layout-opt span { font-size:11px; color:var(--gray-600); }
+
+    /* WARN BOX */
+    .warn-box { background:#FEF3C7; border:1px solid #FDE68A; border-radius:var(--r-md); padding:10px 14px; display:flex; gap:8px; align-items:flex-start; }
+    .warn-box i { font-size:15px; color:#D97706; flex-shrink:0; margin-top:1px; }
+    .warn-box p { font-size:12px; color:#92400E; line-height:1.6; }
+
+    /* TOAST & SPINNER */
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:999; background:var(--green-800); color:#fff; padding:11px 18px; border-radius:var(--r-lg); font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px; transform:translateY(80px); opacity:0; transition:all 0.3s ease; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .spinner-wrap { min-height:60vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+    .spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--green-200); border-top-color:var(--green-700); animation:spin 0.8s linear infinite; }
+
+    footer { background:var(--green-900); color:var(--green-200); padding:1.5rem; text-align:center; margin-top:2rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--green-100); }
+    .footer-logo em { color:var(--amber-200); font-style:normal; }
+    footer p { font-size:12px; opacity:0.6; margin-top:4px; }
+
+
+    /* KUNDEN-PROFIL ITEMS */
+    .kunden-profil-item {
+      display:flex; align-items:center; gap:10px; padding:10px;
+      background:var(--p-bg); border:1px solid var(--p-border);
+      border-radius:var(--r-lg); margin-bottom:8px; cursor:pointer;
+      transition:all var(--tr);
+    }
+    .kunden-profil-item:hover { border-color:var(--p-accent); transform:translateX(2px); }
+    .kunden-profil-item:last-child { margin-bottom:0; }
+    .kpi-avatar {
+      width:40px; height:40px; border-radius:50%; flex-shrink:0;
+      background:var(--amber-100); border:2px solid var(--amber-200);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; color:var(--amber-600); overflow:hidden;
+    }
+    .kpi-info { flex:1; min-width:0; }
+    .kpi-name { font-size:13px; font-weight:500; color:var(--p-text); margin-bottom:2px; }
+    .kpi-ort { font-size:11px; color:var(--p-text2); display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+    .kpi-desc { font-size:11px; color:var(--p-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .kpi-nr { font-size:10px; color:var(--p-text2); font-family:'Courier New',monospace; white-space:nowrap; flex-shrink:0; }
+
+    @media(max-width:680px) {
+      .profil-body { padding:1rem; }
+      .blocks-container { grid-template-columns:1fr !important; }
+      .farben-grid { grid-template-columns:1fr; }
+      .js-grid { grid-template-columns:1fr 1fr; }
+      .layout-grid { grid-template-columns:repeat(2,1fr); }
+      .btn-anpass-grid { grid-template-columns:1fr 1fr; }
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">Grün<em>&</em>Garten</a>
+  <div class="nav-right" id="navRight">
+    <a href="anmelden.html" class="nbtn primary"><i class="ti ti-login"></i> Anmelden</a>
+  </div>
+</nav>
+
+<div class="editor-toolbar" id="editorToolbar">
+  <span style="font-size:12px;opacity:0.7">✏️ Bearbeitungsmodus</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="toggleDragBtn" onclick="toggleDragMode()"><i class="ti ti-drag-drop"></i> Boxen verschieben</button>
+  <button class="tb-btn" onclick="openModal('layout')"><i class="ti ti-layout"></i> Layout</button>
+  <button class="tb-btn" onclick="openModal('farben')"><i class="ti ti-palette"></i> Farben</button>
+  <button class="tb-btn" onclick="openModal('auftrag-neu')"><i class="ti ti-plus"></i> Angebot</button>
+  <button class="tb-btn" onclick="openModal('verfuegbarkeit')"><i class="ti ti-clock"></i> Verfügbarkeit</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="speichereAlles()" style="background:var(--green-700);border-color:var(--green-600)"><i class="ti ti-device-floppy"></i> Speichern</button>
+</div>
+
+<div id="spinnerWrap" class="spinner-wrap">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--gray-600)">Profil wird geladen...</p>
+</div>
+
+<div id="profilWrap" style="display:none">
+  <div class="profil-header" id="profilHeader">
+    <div class="ph-inner">
+      <div class="avatar" id="avatarEl" onclick="clickAvatar()">
+        <i class="ti ti-user" id="avatarIcon"></i>
+        <img id="avatarImg" alt="Profilbild" />
+        <div class="avatar-overlay"><i class="ti ti-camera"></i></div>
+      </div>
+      <div class="ph-info">
+        <div class="ph-name" id="displayName">–</div>
+        <div class="ph-realname" id="displayRealname">–</div>
+        <div class="ph-badges">
+          <span class="ph-badge"><i class="ti ti-map-pin" style="font-size:11px"></i> PLZ <span id="displayPlz">–</span></span>
+          <span class="ph-badge"><i class="ti ti-id-badge" style="font-size:11px"></i> <span class="ph-nr" id="displayNr">–</span></span>
+          <span class="ph-badge"><i class="ti ti-shield-check" style="font-size:11px"></i> Verifiziert</span>
+          <!-- Status Badge (nur Besitzer) -->
+          <span class="status-badge online" id="statusBadge" style="display:none" onclick="toggleStatus()">
+            <span class="dot"></span>
+            <span id="statusText">Online & Öffentlich</span>
+          </span>
+        </div>
+      </div>
+      <div id="headerAktionen" style="display:none;margin-left:auto">
+        <button class="nbtn" onclick="openModal('basisprofil')" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:#fff">
+          <i class="ti ti-edit"></i> Bearbeiten
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="profil-body">
+    <div class="blocks-container layout-2" id="blocksContainer"></div>
+  </div>
+</div>
+
+<!-- AKTIONS-BUTTONS -->
+<div class="aktions-wrap" id="aktionsWrap">
+  <div class="btn-anpass-panel">
+    <p style="font-size:13px;font-weight:500;color:var(--p-text);margin-bottom:1rem"><i class="ti ti-settings" style="color:var(--p-accent)"></i> Buttons anpassen</p>
+    <div class="btn-anpass-grid">
+      <div class="bap-item"><label>Form</label><select class="bap-select" id="btnForm" onchange="updateButtons()"><option value="form-rund">Rund</option><option value="form-mittel">Abgerundet</option><option value="form-eckig">Eckig</option></select></div>
+      <div class="bap-item"><label>Stil</label><select class="bap-select" id="btnStil" onchange="updateButtons()"><option value="stil-gefuellt">Gefüllt</option><option value="stil-outline">Rahmen</option><option value="stil-ghost">Ghost</option></select></div>
+      <div class="bap-item"><label>Größe</label><select class="bap-select" id="btnGroesse" onchange="updateButtons()"><option value="14px">Normal</option><option value="12px">Klein</option><option value="16px">Groß</option></select></div>
+      <div class="bap-item"><label>Farbe: Konto löschen</label><input type="color" class="bap-color" id="btnColor1" value="#DC2626" oninput="updateButtons()"/></div>
+      <div class="bap-item"><label>Farbe: Geld</label><input type="color" class="bap-color" id="btnColor2" value="#16A34A" oninput="updateButtons()"/></div>
+      <div class="bap-item"><label>Farbe: Kunden-Aufträge</label><input type="color" class="bap-color" id="btnColor3" value="#2563EB" oninput="updateButtons()"/></div>
+    </div>
+  </div>
+  <div class="aktions-inner">
+    <button id="btnKontoLoeschen" class="aktions-btn form-rund" onclick="kontoLoeschen()" style="background:#DC2626;color:#fff"><i class="ti ti-trash"></i> Konto löschen</button>
+    <button id="btnGeld" class="aktions-btn form-rund" onclick="window.location.href='geld.html'" style="background:#16A34A;color:#fff"><i class="ti ti-coin"></i> Geld</button>
+    <button id="btnKundenAuftraege" class="aktions-btn form-rund" onclick="openModal('kunden-auftraege-modal')" style="background:#2563EB;color:#fff"><i class="ti ti-users"></i> Kunden-Aufträge</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastText"></span></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Bearbeiten</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadAvatar(event)" />
+
+<footer>
+  <div class="footer-logo">Grün<em>&</em>Garten</div>
+  <p>Deine Gärtner-Vermittlung · Hannover</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zmryzkmumypvxpidpxcz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptcnl6a211bXlwdnhwaWRweGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDEwNDQsImV4cCI6MjA3NTkxNzA0NH0.bTvCv1x7TZMT0_XuJbHnWxGUizROrGmecF_EnASMX4s';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser=null, profil=null, gaertnerProfil=null, isOwner=false, editMode=false, dragMode=false;
+let auftraege=[], kundenAuftraege=[], kundenProfile=[], blockOrder=['beschreibung','jahreszeiten','taetigkeiten','verfuegbarkeit','werkzeug','erfahrung','ausbildung','auftraege','kunden-profile','kunden-auftraege','kontakt'];
+let currentLayout='layout-2';
+let hiddenBlocks = new Set();
+let farben={ bg:'#f5f8f0', card:'#ffffff', header:'#27500A', accent:'#BA7517', text:'#2C2C2A', text2:'#5F5E5A', border:'#C0DD97', btnBg:'#3B6D11', btnText:'#ffffff' };
+let btnEinstellungen={ form:'form-rund', stil:'stil-gefuellt', groesse:'14px', c1:'#DC2626', c2:'#16A34A', c3:'#2563EB' };
+let isOnline = true;
+
+const urlParams = new URLSearchParams(window.location.search);
+const profilId = urlParams.get('id');
+
+const JAHRESZEITEN_TAETIGKEITEN = {
+  fruehling: [{icon:'ti-scissors',label:'Rasenmähen'},{icon:'ti-plant',label:'Pflanzen einsetzen'},{icon:'ti-leaf',label:'Unkraut entfernen'},{icon:'ti-shovel',label:'Umgraben / Harken'},{icon:'ti-building',label:'Beete anlegen'},{icon:'ti-droplet',label:'Düngen'}],
+  sommer: [{icon:'ti-scissors',label:'Rasenmähen'},{icon:'ti-cut',label:'Hecke schneiden'},{icon:'ti-bucket',label:'Bewässerung'},{icon:'ti-droplet',label:'Düngen'},{icon:'ti-leaf',label:'Unkraut entfernen'},{icon:'ti-brush',label:'Reinigen / Kehren'}],
+  herbst: [{icon:'ti-tree',label:'Bäume beschneiden'},{icon:'ti-trash',label:'Gartenabfälle'},{icon:'ti-leaf',label:'Laub entfernen'},{icon:'ti-shovel',label:'Umgraben / Harken'},{icon:'ti-building',label:'Beete vorbereiten'},{icon:'ti-brush',label:'Reinigen / Kehren'}],
+  winter: [{icon:'ti-snowflake',label:'Winterdienst'},{icon:'ti-brush',label:'Wege freimachen'},{icon:'ti-tree',label:'Bäume prüfen'},{icon:'ti-building',label:'Planung & Pflege'}]
+};
+const WOCHENTAGE = [{key:'mo',label:'Mo'},{key:'di',label:'Di'},{key:'mi',label:'Mi'},{key:'do',label:'Do'},{key:'fr',label:'Fr'},{key:'sa',label:'Sa'},{key:'so',label:'So'}];
+const WERKZEUGE_LISTE = [{icon:'ti-tool',label:'Rasenmäher'},{icon:'ti-scissors',label:'Heckenschere'},{icon:'ti-shovel',label:'Spaten & Harke'},{icon:'ti-droplet',label:'Gartenschlauch'},{icon:'ti-leaf',label:'Laubbläser'},{icon:'ti-cut',label:'Astschere'},{icon:'ti-bucket',label:'Schubkarre'},{icon:'ti-trash',label:'Kompostbehälter'},{icon:'ti-car',label:'Transporter'},{icon:'ti-engine',label:'Vertikutierer'}];
+const FARBEN_VORLAGEN = [
+  {name:'Waldgrün',bg:'#f5f8f0',card:'#ffffff',header:'#27500A',accent:'#BA7517',text:'#2C2C2A',text2:'#5F5E5A',border:'#C0DD97',btnBg:'#3B6D11',btnText:'#ffffff'},
+  {name:'Sonnengelb',bg:'#FFFDF5',card:'#ffffff',header:'#92400E',accent:'#D97706',text:'#1C1917',text2:'#78716C',border:'#FDE68A',btnBg:'#D97706',btnText:'#ffffff'},
+  {name:'Herbstrot',bg:'#FFF7ED',card:'#ffffff',header:'#9A3412',accent:'#EA580C',text:'#1C1917',text2:'#78716C',border:'#FED7AA',btnBg:'#EA580C',btnText:'#ffffff'},
+  {name:'Winterblau',bg:'#F0F7FF',card:'#ffffff',header:'#1E3A5F',accent:'#3B82F6',text:'#1E293B',text2:'#64748B',border:'#BFDBFE',btnBg:'#2563EB',btnText:'#ffffff'},
+  {name:'Dunkel',bg:'#1A1A1A',card:'#2A2A2A',header:'#111111',accent:'#A3E635',text:'#F0F0F0',text2:'#A0A0A0',border:'#3A3A3A',btnBg:'#4D7C0F',btnText:'#ffffff'},
+  {name:'Lavendel',bg:'#F5F3FF',card:'#ffffff',header:'#4C1D95',accent:'#7C3AED',text:'#1E1B4B',text2:'#6B7280',border:'#DDD6FE',btnBg:'#6D28D9',btnText:'#ffffff'},
+];
+
+// ── INIT ──
+async function init() {
+  const {data:{session}} = await sb.auth.getSession();
+  currentUser = session?.user || null;
+  const zielId = profilId || currentUser?.id;
+  if (!zielId) { window.location.href='anmelden.html'; return; }
+
+  const {data,error} = await sb.from('profile').select('*').eq('id',zielId).single();
+  if (error || !data || data.rolle !== 'gaertner') {
+    document.getElementById('spinnerWrap').innerHTML='<p style="color:var(--gray-600);padding:3rem;text-align:center">Profil nicht gefunden.</p>';
+    return;
+  }
+  profil = data;
+  isOwner = currentUser?.id === zielId;
+
+  const {data:gd} = await sb.from('gaertner_profil').select('*').eq('user_id',zielId).single();
+  gaertnerProfil = gd || {};
+
+  const {data:ad} = await sb.from('gaertner_auftraege').select('*').eq('gaertner_id',zielId).order('erstellt_am',{ascending:false});
+  auftraege = ad || [];
+
+  // Kunden-Aufträge laden (nur für Besitzer)
+  if (isOwner) {
+    try {
+      const {data:kd, error:kdErr} = await sb.from('kunden_auftraege')
+        .select('*')
+        .eq('status','offen')
+        .order('erstellt_am',{ascending:false})
+        .limit(20);
+      if (!kdErr) kundenAuftraege = kd || [];
+      else console.warn('Kunden-Aufträge Fehler:', kdErr.message);
+    } catch(e) { console.warn('Kunden-Aufträge Ladefehler:', e); }
+  }
+
+  // Kunden-Profile laden (für Gärtner sichtbar – nur sichere Felder)
+  if (isOwner) {
+    try {
+      const {data:kp, error:kpErr} = await sb.from('profile')
+        .select('id,anzeigename,vorname,nachname,plz,beschreibung,avatar_url,kunden_nr,stadtteil')
+        .eq('rolle','kunde')
+        .order('erstellt_am',{ascending:false})
+        .limit(12);
+      if (!kpErr) kundenProfile = kp || [];
+      else console.warn('Kunden-Profile Fehler:', kpErr.message);
+    } catch(e) { console.warn('Kunden-Profile Ladefehler:', e); }
+  }
+
+  // Einstellungen laden
+  if (gaertnerProfil.profil_einstellungen) {
+    try {
+      const e = JSON.parse(gaertnerProfil.profil_einstellungen);
+      if (e.farben) farben={...farben,...e.farben};
+      if (e.blockOrder) {
+        // Neue Blöcke die noch nicht in gespeicherter Order sind, hinzufügen
+        const defaultOrder = ['beschreibung','jahreszeiten','taetigkeiten','verfuegbarkeit','werkzeug','erfahrung','ausbildung','auftraege','kunden-profile','kunden-auftraege','kontakt'];
+        const saved = e.blockOrder;
+        const missing = defaultOrder.filter(b => !saved.includes(b));
+        blockOrder = [...saved, ...missing];
+      }
+      if (e.layout) currentLayout=e.layout;
+      if (e.btnEinstellungen) btnEinstellungen={...btnEinstellungen,...e.btnEinstellungen};
+      if (e.hiddenBlocks) hiddenBlocks=new Set(e.hiddenBlocks);
+      if (typeof e.isOnline === 'boolean') isOnline=e.isOnline;
+    } catch(_){}
+  }
+
+  applyFarben();
+  renderProfil();
+}
+
+function applyFarben() {
+  const r = document.documentElement;
+  r.style.setProperty('--p-bg',farben.bg); r.style.setProperty('--p-card',farben.card);
+  r.style.setProperty('--p-header',farben.header); r.style.setProperty('--p-accent',farben.accent);
+  r.style.setProperty('--p-text',farben.text); r.style.setProperty('--p-text2',farben.text2);
+  r.style.setProperty('--p-border',farben.border); r.style.setProperty('--p-btn-bg',farben.btnBg);
+  r.style.setProperty('--p-btn-text',farben.btnText);
+}
+
+function renderProfil() {
+  // Header
+  document.getElementById('displayName').textContent = profil.anzeigename || 'Kein Anzeigename';
+  document.getElementById('displayRealname').textContent = ((profil.vorname||'')+' '+(profil.nachname||'')).trim() || '–';
+  document.getElementById('displayPlz').textContent = profil.plz || '–';
+  // Gärtner-Nummer
+  const nr = profil.gaertner_nr || profil.kunden_nr || ('GR-'+profil.id.slice(0,6).toUpperCase());
+  document.getElementById('displayNr').textContent = nr;
+  if (profil.avatar_url) {
+    document.getElementById('avatarImg').src = profil.avatar_url;
+    document.getElementById('avatarImg').style.display='block';
+    document.getElementById('avatarIcon').style.display='none';
+  }
+
+  if (isOwner) {
+    document.getElementById('navRight').innerHTML = `
+      <span style="font-size:12px;color:var(--gray-600)">Hallo ${profil.vorname||'Gärtner'}</span>
+      <button class="nbtn" onclick="toggleEditMode()"><i class="ti ti-edit"></i> Bearbeiten</button>
+      <button class="nbtn" onclick="abmelden()" style="color:#991B1B;border-color:#FECACA"><i class="ti ti-logout"></i></button>
+    `;
+    document.getElementById('headerAktionen').style.display='block';
+    document.getElementById('aktionsWrap').classList.add('visible');
+    const sb_el = document.getElementById('statusBadge');
+    sb_el.style.display='inline-flex';
+    updateStatusBadge();
+    setTimeout(updateButtons,100);
+  } else {
+    // Besucher-Navbar
+    if (currentUser) {
+      document.getElementById('navRight').innerHTML = `
+        <a href="kunden-dashboard.html" class="nbtn"><i class="ti ti-arrow-left"></i> Mein Bereich</a>
+      `;
+    } else {
+      document.getElementById('navRight').innerHTML = `
+        <a href="anmelden.html" class="nbtn primary"><i class="ti ti-login"></i> Anmelden</a>
+      `;
+    }
+  }
+
+  const container = document.getElementById('blocksContainer');
+  container.className = 'blocks-container ' + currentLayout;
+  container.innerHTML = '';
+  blockOrder.forEach(id => {
+    const el = createBlock(id);
+    if (el) container.appendChild(el);
+  });
+
+  document.getElementById('spinnerWrap').style.display='none';
+  document.getElementById('profilWrap').style.display='block';
+}
+
+// ── STATUS ──
+function updateStatusBadge() {
+  const badge = document.getElementById('statusBadge');
+  const text = document.getElementById('statusText');
+  badge.className = 'status-badge ' + (isOnline ? 'online' : 'offline');
+  text.textContent = isOnline ? 'Online & Öffentlich' : 'Offline / Versteckt';
+}
+
+async function toggleStatus() {
+  if (!isOwner) return;
+  isOnline = !isOnline;
+  updateStatusBadge();
+  await speichereEinstellungen();
+  showToast(isOnline ? '✅ Du bist jetzt öffentlich sichtbar' : '🔒 Du bist jetzt offline/versteckt');
+}
+
+// ── BLOCKS ──
+function createBlock(id) {
+  const isHidden = hiddenBlocks.has(id);
+  // Besucher sehen ausgeblendete Blöcke gar nicht
+  if (isHidden && !isOwner) return null;
+  const block = document.createElement('div');
+  block.className = 'block' + (isHidden ? ' hidden-block' : '');
+  block.dataset.blockId = id;
+  block.draggable = false;
+
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle';
+  handle.innerHTML = '<i class="ti ti-grip-vertical"></i>';
+  block.appendChild(handle);
+  handle.addEventListener('mousedown', () => block.draggable = true);
+  block.addEventListener('dragstart', onDragStart);
+  block.addEventListener('dragover', onDragOver);
+  block.addEventListener('dragleave', onDragLeave);
+  block.addEventListener('drop', onDrop);
+  block.addEventListener('dragend', () => { block.draggable=false; block.classList.remove('dragging'); });
+
+  let inner = '';
+  const toggleBtn = `<button class="block-toggle-btn ${isHidden?'hidden':''}" onclick="toggleBlock('${id}',this)" title="${isHidden?'Einblenden':'Ausblenden'}"><i class="ti ${isHidden?'ti-eye':'ti-eye-off'}"></i>${isHidden?'Einblenden':'Ausblenden'}</button>`;
+
+  if (id === 'beschreibung') {
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-user-circle"></i> Über mich</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('beschreibung')"><i class="ti ti-pencil"></i> Bearbeiten</button></div></div>
+    <div class="warn-box" style="margin-bottom:12px"><i class="ti ti-alert-triangle"></i><p><strong>Wichtig:</strong> E-Mail & Telefonnummern sind verboten. Verstöße → Konto-Sperrung.</p></div>
+    <p class="beschreibung-text">${profil.beschreibung || '<span style="font-style:italic;color:var(--p-text2)">Noch keine Beschreibung.</span>'}</p>`;
+  }
+  else if (id === 'jahreszeiten') {
+    const js = gaertnerProfil.jahreszeiten||[];
+    const jsMap = {fruehling:{icon:'ti-seeding',label:'Frühling'},sommer:{icon:'ti-sun',label:'Sommer'},herbst:{icon:'ti-leaf',label:'Herbst'},winter:{icon:'ti-snowflake',label:'Winter'}};
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-calendar-event"></i> Jahreszeiten</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('taetigkeiten')"><i class="ti ti-pencil"></i></button></div></div>
+    <div class="tags-wrap">${js.length>0?js.map(j=>`<span class="tag jahreszeit ${j}"><i class="ti ${jsMap[j]?.icon||'ti-star'}"></i>${jsMap[j]?.label||j}</span>`).join(''):'<span class="leer">Keine Jahreszeiten gewählt.</span>'}</div>`;
+  }
+  else if (id === 'taetigkeiten') {
+    const t = gaertnerProfil.taetigkeiten||[];
+    const allIcons = Object.values(JAHRESZEITEN_TAETIGKEITEN).flat();
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-tool"></i> Tätigkeiten</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('taetigkeiten')"><i class="ti ti-pencil"></i></button></div></div>
+    <div class="tags-wrap">${t.length>0?t.map(x=>{const m=allIcons.find(y=>y.label===x);return `<span class="tag"><i class="ti ${m?.icon||'ti-check'}"></i>${x}</span>`;}).join(''):'<span class="leer">Keine Tätigkeiten eingetragen.</span>'}</div>`;
+  }
+  else if (id === 'verfuegbarkeit') {
+    const v = gaertnerProfil.verfuegbarkeit||[];
+    const tagMap={mo:'Mo',di:'Di',mi:'Mi',do:'Do',fr:'Fr',sa:'Sa',so:'So',wochenendeGern:'WE bevorzugt',flexible:'Flexibel'};
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-clock"></i> Verfügbarkeit</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('verfuegbarkeit')"><i class="ti ti-pencil"></i></button></div></div>
+    <div class="verfueg-grid">${v.length>0?v.map(tag=>`<span class="verfueg-tag aktiv"><i class="ti ti-check"></i>${tagMap[tag]||tag}</span>`).join(''):'<span class="leer">Keine Verfügbarkeit eingetragen.</span>'}</div>`;
+  }
+  else if (id === 'werkzeug') {
+    const wz = gaertnerProfil.werkzeuge||[];
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-tool"></i> Eigenes Werkzeug</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('werkzeug')"><i class="ti ti-pencil"></i></button></div></div>
+    <div class="werkzeug-liste">${wz.length>0?wz.map(w=>`<span class="werkzeug-tag"><i class="ti ti-check"></i>${w}</span>`).join(''):'<span class="leer">Kein eigenes Werkzeug angegeben.</span>'}</div>`;
+  }
+  else if (id === 'erfahrung') {
+    const zeilen=(gaertnerProfil.arbeitgeber||'').split('\n').filter(l=>l.trim());
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-briefcase"></i> Erfahrung</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('erfahrung')"><i class="ti ti-pencil"></i></button></div></div>
+    <ul class="erfahrung-list">${zeilen.length>0?zeilen.map(l=>`<li><i class="ti ti-building"></i>${l}</li>`).join(''):'<li style="border:none"><span class="leer">Keine Erfahrung eingetragen.</span></li>'}</ul>`;
+  }
+  else if (id === 'ausbildung') {
+    const zeilen=(gaertnerProfil.ausbildung||'').split('\n').filter(l=>l.trim());
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-certificate"></i> Ausbildung</div><div class="bt-right">${toggleBtn}<button class="block-edit-btn" onclick="openModal('erfahrung')"><i class="ti ti-pencil"></i></button></div></div>
+    <ul class="erfahrung-list">${zeilen.length>0?zeilen.map(l=>`<li><i class="ti ti-certificate"></i>${l}</li>`).join(''):'<li style="border:none"><span class="leer">Keine Ausbildung eingetragen.</span></li>'}</ul>`;
+  }
+  else if (id === 'auftraege') {
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-clipboard-list"></i> Meine Angebote</div><div class="bt-right">${toggleBtn}${isOwner?'<button class="block-edit-btn" onclick="openModal(\'auftrag-neu\')"><i class="ti ti-plus"></i> Hinzufügen</button>':''}</div></div>
+    <div class="auftraege-liste">${auftraege.length>0?auftraege.map(a=>`
+      <div class="auftrag-card ${a.status==='angenommen'?'angenommen':''}" onclick="${isOwner?`openModal('auftrag-bearbeiten','${a.id}')`:''}" >
+        <div class="ac-top"><div class="ac-name">${a.titel}</div><div class="ac-preis">${a.preis?a.preis+'€':'Auf Anfrage'}</div></div>
+        <div class="ac-meta">
+          ${a.dauer?`<span><i class="ti ti-clock"></i>${a.dauer}</span>`:''}
+          ${a.jahreszeit?`<span><i class="ti ti-calendar"></i>${a.jahreszeit}</span>`:''}
+          ${a.status==='angenommen'?'<span style="color:#166534;font-weight:500"><i class="ti ti-check"></i>Angenommen!</span>':''}
+        </div>
+        ${!isOwner?`<button class="anfragen-btn" onclick="auftragAnfragen('${a.id}')"><i class="ti ti-send"></i> Anfragen</button>`:''}
+      </div>`).join(''):'<p class="leer">Noch keine Angebote.</p>'}</div>`;
+  }
+  else if (id === 'kunden-profile') {
+    if (!isOwner) return null;
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-users"></i> Kunden in der Nähe</div><div class="bt-right">${toggleBtn}</div></div>
+    <div id="kundenProfileListe">
+      ${kundenProfile.length > 0
+        ? kundenProfile.map(k => `
+          <div class="kunden-profil-item" onclick="window.open('kunden-profil-ansicht.html?id=${k.id}','_blank')">
+            <div class="kpi-avatar">
+              ${k.avatar_url ? `<img src="${k.avatar_url}" alt="" onload="this.style.display='block'" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"/>` : '<i class="ti ti-user"></i>'}
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-name">${k.anzeigename || ((k.vorname||'') + ' ' + (k.nachname||'')).trim() || 'Kunde'}</div>
+              <div class="kpi-ort"><i class="ti ti-map-pin" style="font-size:11px"></i> ${k.stadtteil || k.plz || 'Unbekannt'}</div>
+              ${k.beschreibung ? `<div class="kpi-desc">${k.beschreibung.slice(0,60)}${k.beschreibung.length>60?'...':''}</div>` : ''}
+            </div>
+            <div class="kpi-nr">${k.kunden_nr || ''}</div>
+          </div>`).join('')
+        : '<p class="leer">Noch keine Kunden registriert oder Datenbankrechte fehlen.<br><small style="font-size:11px">→ supabase_stadtteil.sql ausführen</small></p>'}
+    </div>`;
+  }
+
+  else if (id === 'kunden-auftraege') {
+    if (!isOwner) return null;
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-users"></i> Kunden-Aufträge</div><div class="bt-right">${toggleBtn}</div></div>
+    <div>${kundenAuftraege.length>0?kundenAuftraege.slice(0,5).map(a=>`
+      <div class="kunden-auftrag-item">
+        <div class="ka-top"><div class="ka-titel">${a.titel}</div><span style="font-size:11px;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:10px;">Offen</span></div>
+        ${a.problem_tags?.length?`<div class="ka-tags">${a.problem_tags.map(t=>`<span class="ka-tag">${t}</span>`).join('')}</div>`:''}
+        <div class="ka-meta">
+          ${a.termin_datum?`<span><i class="ti ti-calendar"></i>${new Date(a.termin_datum).toLocaleDateString('de-DE')}</span>`:''}
+          ${a.wochentage?.length?`<span><i class="ti ti-clock"></i>${a.wochentage.join(', ')}</span>`:''}
+          ${a.preis?`<span><i class="ti ti-coin"></i>~${a.preis}€</span>`:''}
+          <span><i class="ti ti-tool"></i>Werkzeug: ${a.werkzeug==='ja'?'Vorhanden':'Keins'}</span>
+        </div>
+        <button class="ka-btn" onclick="auftragAnnehmen('${a.id}')"><i class="ti ti-check"></i> Auftrag annehmen</button>
+      </div>`).join(''):'<p class="leer">Keine offenen Kunden-Aufträge.</p>'}</div>`;
+  }
+  else if (id === 'kontakt') {
+    if (isOwner) return null;
+    if (!isOnline) return null; // Offline → kein Kontakt
+    inner = `<div class="block-title"><div class="bt-left"><i class="ti ti-send"></i> Kontakt</div></div>
+    <div class="kontakt-block">
+      <button class="kontakt-btn primary" onclick="auftragAnfragen()"><i class="ti ti-clipboard-plus"></i> Auftrag anfragen</button>
+      <p class="sicher-hinweis">🔒 Kein Austausch von Telefonnummern oder E-Mails – nur interner Chat</p>
+    </div>`;
+  }
+
+  if (!inner) return null;
+  block.innerHTML += inner;
+  return block;
+}
+
+// ── BLOCK TOGGLE (Einblenden/Ausblenden) ──
+function toggleBlock(id, btn) {
+  const block = document.querySelector(`.block[data-block-id="${id}"]`);
+  if (!block) return;
+  if (hiddenBlocks.has(id)) {
+    hiddenBlocks.delete(id);
+    block.classList.remove('hidden-block');
+    btn.innerHTML = '<i class="ti ti-eye-off"></i>Ausblenden';
+    btn.classList.remove('hidden');
+  } else {
+    hiddenBlocks.add(id);
+    block.classList.add('hidden-block');
+    btn.innerHTML = '<i class="ti ti-eye"></i>Einblenden';
+    btn.classList.add('hidden');
+  }
+  showToast(hiddenBlocks.has(id) ? 'Block ausgeblendet' : 'Block eingeblendet');
+}
+
+// ── DRAG & DROP ──
+let dragSrc = null;
+function toggleDragMode() {
+  dragMode = !dragMode;
+  document.getElementById('toggleDragBtn').classList.toggle('active',dragMode);
+  document.querySelectorAll('.block').forEach(b => b.style.cursor = dragMode?'grab':'default');
+  showToast(dragMode ? '↕️ Verschieben aktiv' : '✅ Drag-Modus aus');
+}
+function onDragStart(e) { if(!dragMode){e.preventDefault();return;} dragSrc=this; this.classList.add('dragging'); }
+function onDragOver(e) { if(!dragMode)return; e.preventDefault(); this.classList.add('drag-over'); }
+function onDragLeave() { this.classList.remove('drag-over'); }
+function onDrop(e) {
+  if(!dragMode||dragSrc===this)return;
+  e.preventDefault(); this.classList.remove('drag-over');
+  const c=document.getElementById('blocksContainer'), ch=[...c.children];
+  const si=ch.indexOf(dragSrc), ti=ch.indexOf(this);
+  if(si<ti) c.insertBefore(dragSrc,this.nextSibling); else c.insertBefore(dragSrc,this);
+  blockOrder = [...c.children].map(b=>b.dataset.blockId);
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editorToolbar').classList.toggle('visible',editMode);
+  document.body.classList.toggle('edit-mode',editMode);
+  document.querySelector('.nbtn[onclick="toggleEditMode()"]').innerHTML = editMode
+    ? '<i class="ti ti-eye"></i> Vorschau'
+    : '<i class="ti ti-edit"></i> Bearbeiten';
+}
+
+// ── MODALS ──
+function openModal(typ, extraId) {
+  const overlay=document.getElementById('modalOverlay'), body=document.getElementById('modalBody'), title=document.getElementById('modalTitle');
+
+  if (typ==='basisprofil') {
+    title.textContent='Profil bearbeiten';
+    body.innerHTML=`<div class="fg"><label>Anzeigename</label><input id="m_an" value="${profil.anzeigename||''}"/></div>
+    <div class="fg"><label>PLZ</label><input id="m_plz" value="${profil.plz||''}" maxlength="5"/></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveBasis()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='beschreibung') {
+    title.textContent='Über mich';
+    body.innerHTML=`<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px 14px;margin-bottom:1rem;display:flex;gap:10px">
+      <i class="ti ti-alert-triangle" style="color:#D97706;font-size:18px;flex-shrink:0"></i>
+      <p style="font-size:12px;color:#92400E;line-height:1.6">E-Mail & Telefon sind VERBOTEN. Verstöße führen zur Konto-Sperrung. Kunden-Abwerbung ebenfalls verboten.</p>
+    </div>
+    <div class="fg"><label>Über mich</label><textarea id="m_desc" rows="6" placeholder="Deine Stärken, Arbeitsweise... Keine Kontaktdaten!">${profil.beschreibung||''}</textarea><p class="hint">Keine Telefonnummern oder E-Mail-Adressen erlaubt</p></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveDesc()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='taetigkeiten') {
+    title.textContent='Jahreszeiten & Tätigkeiten';
+    const aktiveJS=new Set(gaertnerProfil.jahreszeiten||[]), aktiveTaet=new Set(gaertnerProfil.taetigkeiten||[]);
+    body.innerHTML=`<div class="js-grid">
+      <div class="js-btn fruehling ${aktiveJS.has('fruehling')?'selected':''}" onclick="toggleJS(this,'fruehling')"><i class="ti ti-seeding" style="font-size:18px"></i> Frühling</div>
+      <div class="js-btn sommer ${aktiveJS.has('sommer')?'selected':''}" onclick="toggleJS(this,'sommer')"><i class="ti ti-sun" style="font-size:18px"></i> Sommer</div>
+      <div class="js-btn herbst ${aktiveJS.has('herbst')?'selected':''}" onclick="toggleJS(this,'herbst')"><i class="ti ti-leaf" style="font-size:18px"></i> Herbst</div>
+      <div class="js-btn winter ${aktiveJS.has('winter')?'selected':''}" onclick="toggleJS(this,'winter')"><i class="ti ti-snowflake" style="font-size:18px"></i> Winter</div>
+    </div>
+    <p style="font-size:13px;font-weight:500;color:var(--green-800);margin-bottom:8px">Tätigkeiten:</p>
+    <div class="taetigkeit-grid" id="modalTaetigkeitenGrid"></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveTaetigkeiten()"><i class="ti ti-check"></i> Speichern</button></div>`;
+    updateTaetigkeitenGrid(aktiveJS, aktiveTaet);
+  }
+  else if (typ==='verfuegbarkeit') {
+    title.textContent='Verfügbarkeit';
+    const aktiv=new Set(gaertnerProfil.verfuegbarkeit||[]);
+    body.innerHTML=`<div class="verfueg-sel-grid" id="verfuegGrid">
+      ${WOCHENTAGE.map(t=>`<div class="vs-btn ${aktiv.has(t.key)?'selected':''}" onclick="this.classList.toggle('selected')" data-tag="${t.key}"><i class="ti ti-calendar"></i>${t.label}</div>`).join('')}
+      <div class="vs-btn ${aktiv.has('wochenendeGern')?'selected':''}" onclick="this.classList.toggle('selected')" data-tag="wochenendeGern"><i class="ti ti-star"></i>WE bevorzugt</div>
+      <div class="vs-btn ${aktiv.has('flexible')?'selected':''}" onclick="this.classList.toggle('selected')" data-tag="flexible"><i class="ti ti-refresh"></i>Flexibel</div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveVerfuegbarkeit()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='werkzeug') {
+    title.textContent='Eigenes Werkzeug';
+    const aktiv=new Set(gaertnerProfil.werkzeuge||[]);
+    body.innerHTML=`<p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem">Welches Werkzeug bringst du selbst mit?</p>
+    <div class="werkzeug-grid">
+      ${WERKZEUGE_LISTE.map(w=>`<div class="wz-tag ${aktiv.has(w.label)?'selected':''}" onclick="this.classList.toggle('selected')" data-label="${w.label}"><i class="ti ${w.icon}"></i>${w.label}</div>`).join('')}
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveWerkzeug()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='erfahrung') {
+    title.textContent='Erfahrung & Ausbildung';
+    body.innerHTML=`<div class="fg"><label>Arbeitgeber (eine pro Zeile)</label><textarea id="m_arb" rows="4">${gaertnerProfil.arbeitgeber||''}</textarea></div>
+    <div class="fg"><label>Ausbildungen / Kurse (eine pro Zeile)</label><textarea id="m_aus" rows="4">${gaertnerProfil.ausbildung||''}</textarea></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveErfahrung()"><i class="ti ti-check"></i> Speichern</button></div>`;
+  }
+  else if (typ==='auftrag-neu' || typ==='auftrag-bearbeiten') {
+    const a = typ==='auftrag-bearbeiten' ? auftraege.find(x=>x.id===extraId) : null;
+    title.textContent = a ? 'Angebot bearbeiten' : 'Neues Angebot';
+    const alleTaet = Object.values(JAHRESZEITEN_TAETIGKEITEN).flat();
+    const einzigartig = [...new Map(alleTaet.map(t=>[t.label,t])).values()];
+    body.innerHTML=`<div class="fg"><label>Tätigkeit *</label>
+      <select id="a_taetigkeit"><option value="">Tätigkeit wählen...</option>
+        ${einzigartig.map(t=>`<option value="${t.label}" ${a?.titel===t.label?'selected':''}>${t.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Preis (€)</label><input id="a_preis" type="number" min="0" value="${a?.preis||''}" placeholder="z.B. 50"/><p class="hint">Leer = Auf Anfrage</p></div>
+      <div class="fg"><label>Dauer</label><select id="a_dauer">
+        <option value="">Keine Angabe</option>
+        ${['unter 1 Stunde','1-2 Stunden','2-4 Stunden','Halber Tag','Ganzer Tag','Mehrere Tage'].map(d=>`<option value="${d}" ${a?.dauer===d?'selected':''}>${d}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="fg"><label>Jahreszeit</label><select id="a_js">
+      <option value="">Alle</option>
+      ${['Frühling','Sommer','Herbst','Winter'].map(j=>`<option value="${j}" ${a?.jahreszeit===j?'selected':''}>${j}</option>`).join('')}
+    </select></div>
+    <div class="modal-footer">
+      ${a?`<button class="modal-delete" onclick="loescheAuftrag('${a.id}')"><i class="ti ti-trash"></i> Löschen</button>`:''}
+      <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-save" onclick="saveAuftrag('${a?.id||''}')"><i class="ti ti-check"></i> Speichern</button>
+    </div>`;
+  }
+  else if (typ==='kunden-auftraege-modal') {
+    title.textContent='Alle Kunden-Aufträge';
+    body.innerHTML=`<div>${kundenAuftraege.length>0?kundenAuftraege.map(a=>`
+      <div class="kunden-auftrag-item">
+        <div class="ka-top"><div class="ka-titel">${a.titel}</div></div>
+        ${a.problem_tags?.length?`<div class="ka-tags">${a.problem_tags.map(t=>`<span class="ka-tag">${t}</span>`).join('')}</div>`:''}
+        <div class="ka-meta">
+          ${a.termin_datum?`<span><i class="ti ti-calendar"></i>${new Date(a.termin_datum).toLocaleDateString('de-DE')}</span>`:''}
+          ${a.preis?`<span><i class="ti ti-coin"></i>~${a.preis}€</span>`:''}
+          <span><i class="ti ti-tool"></i>Werkzeug: ${a.werkzeug==='ja'?'Vorhanden':'Keins'}</span>
+        </div>
+        <button class="ka-btn" onclick="auftragAnnehmen('${a.id}');closeModal()"><i class="ti ti-check"></i> Annehmen</button>
+      </div>`).join(''):'<p class="leer">Keine offenen Aufträge.</p>'}</div>`;
+  }
+  else if (typ==='farben') {
+    title.textContent='Farben anpassen';
+    body.innerHTML=`<p style="font-size:13px;color:var(--gray-600);margin-bottom:0.8rem">Schnell-Vorlagen:</p>
+    <div class="farben-vorlagen">${FARBEN_VORLAGEN.map((v,i)=>`<div class="fv" style="background:${v.header}" title="${v.name}" onclick="applyVorlage(${i})"></div>`).join('')}</div>
+    <div class="farben-grid">
+      ${['bg','card','header','accent','text','text2','border','btnBg','btnText'].map((k,i)=>{
+        const labels=['Hintergrund','Karten','Header','Akzent','Haupttext','Nebentext','Rahmen','Button','Button-Text'];
+        return `<div class="farbe-item"><label>${labels[i]}</label><input type="color" id="f_${k}" value="${farben[k]}" oninput="farben['${k}']=this.value;applyFarben()"/></div>`;
+      }).join('')}
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="saveFarben()"><i class="ti ti-palette"></i> Speichern</button></div>`;
+  }
+  else if (typ==='layout') {
+    title.textContent='Layout wählen';
+    body.innerHTML=`<div class="layout-grid">
+      ${[{id:'layout-1',label:'Gleich',w:[1,1]},{id:'layout-2',label:'Links breit',w:[2,1]},{id:'layout-3',label:'Rechts breit',w:[1,2]},{id:'layout-4',label:'Vollbreite',w:[1]}].map(l=>`
+        <div class="layout-opt ${currentLayout===l.id?'selected':''}" onclick="selectLayout('${l.id}',this)">
+          <div class="lp">${l.w.map(w=>`<div style="width:${w*18}px"></div>`).join('')}</div>
+          <span>${l.label}</span>
+        </div>`).join('')}
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal()">Abbrechen</button><button class="btn-save" onclick="closeModal();showToast('Layout gespeichert ✅')"><i class="ti ti-check"></i> OK</button></div>`;
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModalOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+
+function toggleJS(el,js) {
+  el.classList.toggle('selected');
+  const aktive=new Set([...document.querySelectorAll('.js-btn.selected')].map(b=>b.classList[1]));
+  const aktiveTaet=new Set([...document.querySelectorAll('#modalTaetigkeitenGrid .taetigkeit-tag.selected')].map(b=>b.dataset.label));
+  updateTaetigkeitenGrid(aktive,aktiveTaet);
+}
+function updateTaetigkeitenGrid(aktiveJS,aktiveTaet) {
+  const grid=document.getElementById('modalTaetigkeitenGrid'); if(!grid)return;
+  const alle=new Map();
+  aktiveJS.forEach(js=>(JAHRESZEITEN_TAETIGKEITEN[js]||[]).forEach(t=>alle.set(t.label,t)));
+  if(alle.size===0){grid.innerHTML='<p style="font-size:13px;color:var(--gray-600);grid-column:1/-1">Zuerst Jahreszeiten wählen.</p>';return;}
+  grid.innerHTML=[...alle.values()].map(t=>`<div class="taetigkeit-tag ${aktiveTaet.has(t.label)?'selected':''}" data-label="${t.label}" onclick="this.classList.toggle('selected')"><i class="ti ${t.icon}"></i>${t.label}</div>`).join('');
+}
+function selectLayout(id,el) {
+  document.querySelectorAll('.layout-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); currentLayout=id;
+  document.getElementById('blocksContainer').className='blocks-container '+id;
+}
+function applyVorlage(i) {
+  farben={...FARBEN_VORLAGEN[i]}; applyFarben();
+  document.querySelectorAll('.fv').forEach((v,vi)=>v.classList.toggle('active',vi===i));
+  ['bg','card','header','accent','text','text2','border','btnBg','btnText'].forEach(k=>{const el=document.getElementById('f_'+k);if(el)el.value=farben[k];});
+}
+
+// ── SPEICHERN ──
+async function saveBasis() {
+  const an=document.getElementById('m_an').value.trim(), plz=document.getElementById('m_plz').value.trim();
+  await sb.from('profile').update({anzeigename:an,plz}).eq('id',currentUser.id);
+  profil.anzeigename=an; profil.plz=plz;
+  document.getElementById('displayName').textContent=an;
+  document.getElementById('displayPlz').textContent=plz;
+  closeModal(); showToast('Profil gespeichert ✅'); renderProfil();
+}
+async function saveDesc() {
+  const d=document.getElementById('m_desc').value.trim();
+  // Email/Telefon prüfen
+  if(/[\d]{5,}|@|\+49/.test(d)){showToast('❌ Keine Telefonnummern oder E-Mails erlaubt!');return;}
+  await sb.from('profile').update({beschreibung:d}).eq('id',currentUser.id);
+  profil.beschreibung=d; closeModal(); showToast('Beschreibung gespeichert ✅'); renderProfil();
+}
+async function saveTaetigkeiten() {
+  const js=[...document.querySelectorAll('.js-btn.selected')].map(b=>b.classList[1]);
+  const t=[...document.querySelectorAll('#modalTaetigkeitenGrid .taetigkeit-tag.selected')].map(b=>b.dataset.label);
+  await upsertGaertnerProfil({jahreszeiten:js,taetigkeiten:t});
+  gaertnerProfil.jahreszeiten=js; gaertnerProfil.taetigkeiten=t;
+  closeModal(); showToast('Tätigkeiten gespeichert ✅'); renderProfil();
+}
+async function saveVerfuegbarkeit() {
+  const v=[...document.querySelectorAll('#verfuegGrid .vs-btn.selected')].map(b=>b.dataset.tag);
+  await upsertGaertnerProfil({verfuegbarkeit:v});
+  gaertnerProfil.verfuegbarkeit=v; closeModal(); showToast('Verfügbarkeit gespeichert ✅'); renderProfil();
+}
+async function saveWerkzeug() {
+  const wz=[...document.querySelectorAll('.wz-tag.selected')].map(b=>b.dataset.label);
+  await upsertGaertnerProfil({werkzeuge:wz});
+  gaertnerProfil.werkzeuge=wz; closeModal(); showToast('Werkzeug gespeichert ✅'); renderProfil();
+}
+async function saveErfahrung() {
+  const arb=document.getElementById('m_arb').value.trim(), aus=document.getElementById('m_aus').value.trim();
+  await upsertGaertnerProfil({arbeitgeber:arb,ausbildung:aus});
+  gaertnerProfil.arbeitgeber=arb; gaertnerProfil.ausbildung=aus;
+  closeModal(); showToast('Erfahrung gespeichert ✅'); renderProfil();
+}
+async function saveAuftrag(id) {
+  const taetigkeit=document.getElementById('a_taetigkeit').value.trim();
+  if(!taetigkeit){showToast('❌ Bitte Tätigkeit wählen!');return;}
+  const obj={gaertner_id:currentUser.id,titel:taetigkeit,beschreibung:'',preis:document.getElementById('a_preis').value||null,dauer:document.getElementById('a_dauer').value||null,jahreszeit:document.getElementById('a_js').value||null};
+  if(id){
+    await sb.from('gaertner_auftraege').update(obj).eq('id',id);
+    const idx=auftraege.findIndex(a=>a.id===id); if(idx>=0) auftraege[idx]={...auftraege[idx],...obj};
+  } else {
+    const {data}=await sb.from('gaertner_auftraege').insert(obj).select().single(); if(data) auftraege.unshift(data);
+  }
+  closeModal(); showToast('Angebot gespeichert ✅'); renderProfil();
+}
+async function loescheAuftrag(id) {
+  if(!confirm('Angebot löschen?'))return;
+  await sb.from('gaertner_auftraege').delete().eq('id',id);
+  auftraege=auftraege.filter(a=>a.id!==id); closeModal(); showToast('Gelöscht'); renderProfil();
+}
+async function saveFarben() {
+  await speichereEinstellungen(); closeModal(); showToast('Farben gespeichert ✅');
+}
+async function speichereAlles() { await speichereEinstellungen(); showToast('✅ Alles gespeichert!'); }
+async function speichereEinstellungen() {
+  const e=JSON.stringify({farben,blockOrder,layout:currentLayout,btnEinstellungen,hiddenBlocks:[...hiddenBlocks],isOnline});
+  await upsertGaertnerProfil({profil_einstellungen:e}); gaertnerProfil.profil_einstellungen=e;
+}
+async function upsertGaertnerProfil(updates) {
+  const {data:ex}=await sb.from('gaertner_profil').select('id').eq('user_id',currentUser.id).single();
+  if(ex) await sb.from('gaertner_profil').update(updates).eq('user_id',currentUser.id);
+  else await sb.from('gaertner_profil').insert({user_id:currentUser.id,...updates});
+  gaertnerProfil={...gaertnerProfil,...updates};
+}
+
+// ── KUNDEN AUFTRAG ANNEHMEN ──
+async function auftragAnnehmen(id) {
+  await sb.from('kunden_auftraege').update({status:'angenommen'}).eq('id',id);
+  const idx=kundenAuftraege.findIndex(a=>a.id===id);
+  if(idx>=0) kundenAuftraege[idx].status='angenommen';
+  showToast('✅ Auftrag angenommen!'); renderProfil();
+}
+
+// ── AVATAR ──
+function clickAvatar() { if(isOwner) document.getElementById('avatarFileInput').click(); }
+async function uploadAvatar(e) {
+  const file=e.target.files[0]; if(!file)return;
+  if(file.size>2*1024*1024){showToast('❌ Max. 2 MB');return;}
+  const ext=file.name.split('.').pop(), path=`avatars/${currentUser.id}.${ext}`;
+  const {error}=await sb.storage.from('profile-images').upload(path,file,{upsert:true});
+  if(error){showToast('❌ Upload fehlgeschlagen');return;}
+  const {data}=sb.storage.from('profile-images').getPublicUrl(path);
+  await sb.from('profile').update({avatar_url:data.publicUrl}).eq('id',currentUser.id);
+  document.getElementById('avatarImg').src=data.publicUrl+'?t='+Date.now();
+  document.getElementById('avatarImg').style.display='block';
+  document.getElementById('avatarIcon').style.display='none';
+  showToast('Profilbild gespeichert ✅');
+}
+
+// ── AKTIONS-BUTTONS ──
+let btnEinstellungenLocal = { ...btnEinstellungen };
+function updateButtons() {
+  const form=document.getElementById('btnForm')?.value||btnEinstellungen.form;
+  const stil=document.getElementById('btnStil')?.value||btnEinstellungen.stil;
+  const groesse=document.getElementById('btnGroesse')?.value||btnEinstellungen.groesse;
+  const c1=document.getElementById('btnColor1')?.value||btnEinstellungen.c1;
+  const c2=document.getElementById('btnColor2')?.value||btnEinstellungen.c2;
+  const c3=document.getElementById('btnColor3')?.value||btnEinstellungen.c3;
+  btnEinstellungen={form,stil,groesse,c1,c2,c3};
+  [{id:'btnKontoLoeschen',color:c1},{id:'btnGeld',color:c2},{id:'btnKundenAuftraege',color:c3}].forEach(b=>{
+    const el=document.getElementById(b.id); if(!el)return;
+    el.className='aktions-btn '+form+(stil==='stil-gefuellt'?'':' '+stil);
+    el.style.fontSize=groesse;
+    if(stil==='stil-gefuellt'){el.style.background=b.color;el.style.color='#fff';el.style.borderColor=b.color;}
+    else if(stil==='stil-outline'){el.style.background='transparent';el.style.color=b.color;el.style.borderColor=b.color;}
+    else{el.style.background='transparent';el.style.color=b.color;el.style.borderColor='transparent';}
+  });
+}
+async function kontoLoeschen() {
+  if(!confirm('Konto KOMPLETT löschen?\n\nAlle Daten werden unwiderruflich gelöscht.'))return;
+  if(!confirm('LETZTE WARNUNG: Endgültig löschen?'))return;
+  showToast('⏳ Wird gelöscht...');
+  try{await sb.from('gaertner_auftraege').delete().eq('gaertner_id',currentUser.id);await sb.from('gaertner_profil').delete().eq('user_id',currentUser.id);await sb.from('profile').delete().eq('id',currentUser.id);}catch(_){}
+  await sb.auth.signOut(); window.location.href='index.html';
+}
+
+function auftragAnfragen(id) { if(!currentUser){window.location.href='anmelden.html';return;} window.location.href=`auftrag-erstellen.html?gaertner=${profil.id}${id?'&angebot='+id:''}`; }
+function chatOeffnen() { if(!currentUser){window.location.href='anmelden.html';return;} window.location.href=`chat.html?mit=${profil.id}`; }
+async function abmelden() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+function showToast(t) {
+  const el=document.getElementById('toast'); document.getElementById('toastText').textContent=t;
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+init();
+</script>
+</body>
+</html>
