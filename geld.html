@@ -170,15 +170,14 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── STRIPE EINSTELLUNGEN ──
 // 1. Stripe Connect Client ID (Stripe Dashboard → Connect → Einstellungen → Client ID)
-const STRIPE_CLIENT_ID = 'ca_DEINE_CLIENT_ID_HIER'; // ← Deine ca_... eintragen!
+const STRIPE_CLIENT_ID = 'ca_UE5g1Z1mBUb5JavaK6JOGDnqH3o2St6Y';
 
 // 2. Redirect URI (muss exakt so auch in Stripe hinterlegt sein)
 // Stripe Dashboard → Connect → Einstellungen → Redirect URIs → diese URL eintragen:
-const REDIRECT_URI = window.location.origin + '/geld.html';
+const REDIRECT_URI = 'https://tommydrettmann-cpu.github.io/darkroschen-serve/geld.html';
 
 // 3. Supabase Edge Function URL (wird automatisch gesetzt)
-const EDGE_FUNCTION_URL = '${SUPABASE_URL}/functions/v1/stripe-connect'
-  .replace('${SUPABASE_URL}', 'https://zmryzkmumypvxpidpxcz.supabase.co');
+const EDGE_FUNCTION_URL = 'https://zmryzkmumypvxpidpxcz.supabase.co/functions/v1/stripe-connect';
 
 async function init() {
   const { data:{ session } } = await sb.auth.getSession();
