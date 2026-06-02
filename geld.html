@@ -168,11 +168,17 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── DEINE STRIPE CONNECT CLIENT ID ──
-// Trage hier deine Stripe Connect Client ID ein (aus dem Stripe Dashboard → Connect)
-// Format: ca_XXXXXXXXXXXXXXXXXXXXXXXX
-const STRIPE_CLIENT_ID = 'ca_DEINE_CLIENT_ID_HIER'; // ← Hier eintragen!
-const REDIRECT_URI = window.location.origin + '/geld.html'; // Callback URL
+// ── STRIPE EINSTELLUNGEN ──
+// 1. Stripe Connect Client ID (Stripe Dashboard → Connect → Einstellungen → Client ID)
+const STRIPE_CLIENT_ID = 'ca_DEINE_CLIENT_ID_HIER'; // ← Deine ca_... eintragen!
+
+// 2. Redirect URI (muss exakt so auch in Stripe hinterlegt sein)
+// Stripe Dashboard → Connect → Einstellungen → Redirect URIs → diese URL eintragen:
+const REDIRECT_URI = window.location.origin + '/geld.html';
+
+// 3. Supabase Edge Function URL (wird automatisch gesetzt)
+const EDGE_FUNCTION_URL = '${SUPABASE_URL}/functions/v1/stripe-connect'
+  .replace('${SUPABASE_URL}', 'https://zmryzkmumypvxpidpxcz.supabase.co');
 
 async function init() {
   const { data:{ session } } = await sb.auth.getSession();
@@ -182,21 +188,50 @@ async function init() {
     .select('stripe_aktiv, stripe_pending, vorname')
     .eq('id', session.user.id).single();
 
+  // session global speichern für stripeUrl
+  window._session = session;
+
   // Stripe OAuth Callback verarbeiten (wenn von Stripe zurückgekommen)
   const urlParams = new URLSearchParams(window.location.search);
   const stripeCode = urlParams.get('code');
   const stripeState = urlParams.get('state');
 
-  if (stripeCode && stripeState === session.user.id) {
-    // Stripe hat den Code geschickt → stripe_pending setzen
-    await sb.from('profile').update({
-      stripe_pending: true,
-      stripe_aktiv:   false
-    }).eq('id', session.user.id);
+  if (stripeCode) {
+    // Stripe hat den Code geschickt → Edge Function aufrufen
+    try {
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          code:   stripeCode,
+          userId: session.user.id,
+        }),
+      });
 
-    // URL bereinigen
-    window.history.replaceState({}, '', 'geld.html');
-    renderStatus('pending', profil?.vorname || 'Gärtner');
+      const result = await res.json();
+
+      if (result.error) {
+        document.getElementById('spinnerWrap').innerHTML =
+          '<p style="color:#DC2626;padding:2rem">Stripe Fehler: ' + result.error + '</p>';
+        return;
+      }
+
+      // URL bereinigen
+      window.history.replaceState({}, '', 'geld.html');
+      renderStatus('pending', profil?.vorname || 'Gärtner');
+    } catch(e) {
+      // Fallback: direkt in Supabase setzen
+      await sb.from('profile').update({
+        stripe_pending: true,
+        stripe_aktiv:   false
+      }).eq('id', session.user.id);
+      window.history.replaceState({}, '', 'geld.html');
+      renderStatus('pending', profil?.vorname || 'Gärtner');
+    }
+
     document.getElementById('spinnerWrap').style.display = 'none';
     document.getElementById('mainWrap').style.display = 'block';
     return;
@@ -251,7 +286,8 @@ function renderStatus(status, name) {
   }
 
   // Gesperrt / noch nicht eingerichtet
-  const stripeUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${STRIPE_CLIENT_ID}&scope=read_write&state=${encodeURIComponent(btoa(Math.random().toString()))}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  const sess = window._session;
+  const stripeUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${STRIPE_CLIENT_ID}&scope=read_write&state=${encodeURIComponent(sess?.user?.id || 'state')}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
 
   box.innerHTML = `
     <div class="status-card gesperrt">
